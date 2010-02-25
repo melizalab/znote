@@ -34,6 +34,20 @@ Array<T,1> hanning(unsigned int n)
 	return out;
 }
 
+template <typename T, int N_rank>
+T frac_thresh(const Array<T,N_rank> &data, double frac)
+{
+	int i;
+	std::vector<T> val(data.size());
+	std::copy(data.begin(), data.end(), val.begin());
+ 	std::sort(val.begin(), val.end());
+	double sum = 0, max = (double)blitz::sum(data);
+	for (i = 0; (i < val.size()) && (sum < frac); i++)
+		sum += (double)val[i] / max;
+	return val[i];
+}
+	
+
 // template <typename T>
 // Array<std::complex<double>,2> specgram(const Array<T,1> &signal, 
 

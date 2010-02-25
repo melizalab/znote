@@ -16,7 +16,8 @@ private:
 	FILE *fp;
 public:
 	bin_reader(const char *filename) {
-		fp = fopen(filename, "rb");
+		if ((fp = fopen(filename, "rb")) == NULL)
+			throw std::runtime_error("File does not exist");
 	}
 	~bin_reader() {
 		fclose(fp);
@@ -32,7 +33,7 @@ public:
 		count = fread(data, sizeof(T), expected, fp);
 
 		if (count < expected)
-			fprintf(stderr, "Only read %d values, expected %d; wrong data type?",
+			fprintf(stderr, "Only read %d values, expected %d; wrong data type?\n",
 				count, expected);
 		blitz::Array<T,2> out(data, tshape, blitz::deleteDataWhenDone);
 		rewind(fp);
@@ -70,6 +71,8 @@ struct timeseries {
 	timeseries(const char *filename) {
 		sf_count_t count, nframes;
 		SndfileHandle fp = SndfileHandle(filename);
+		if (fp.error())
+			throw std::runtime_error("Sound file does not exist");
 		if (fp.channels() != 1)
 			throw std::runtime_error("Sound file has more than 1 channel");
 		samplerate = fp.samplerate();
@@ -86,7 +89,6 @@ struct timeseries {
 		return fp.write(pData, samples.size());
 	}
 };
-	
 
 #endif
 		

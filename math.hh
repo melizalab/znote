@@ -27,21 +27,9 @@ bool inrange(const blitz::Array<T,N_rank> &A, const blitz::TinyVector<int,N_rank
 	return true;
 }
 
-template <typename T> inline
-T& MAX(T &x, T &y) {
-	return (x > y) ? x : y;
-}
-
-// template <typename T1, typename T2>
-// bool same(const T1 &v1, const T2 &v2) {
-// 	return v1==v2;
-// }
-
-// template <typename T1, typename T2, int N_rank> inline
-// bool same(const blitz::TinyVector<T1,N_rank> &A1, const blitz::TinyVector<T2,N_rank> &A2) {
-// 	for (int i = 0; i < N_rank; i++)
-// 		if (A1(i)!=A2(i)) return false;
-// 	return true;
+// template <typename T> inline
+// T& MAX(T &x, T &y) {
+// 	return (x > y) ? x : y;
 // }
 
 #endif

@@ -1,8 +1,5 @@
 #include "components.hh"
-#include "blitz_io.hh"
 #include <blitz/tinyvec-et.h>
-
-using namespace std;
 
 void
 ellipse_neighborhood(coord_list &indices, int n_row, int n_col)
@@ -11,7 +8,6 @@ ellipse_neighborhood(coord_list &indices, int n_row, int n_col)
 	blitz::Array<bool,2> nmat(2 * n_row + 1, 2 * n_col + 1);
 	nmat = (blitz::sqr((blitz::tensor::i - x)/x) + blitz::sqr((blitz::tensor::j - y)/y)) <= 1.0;
 
-	write_bin("nhd.bin",nmat);
 	neighborhood(indices, nmat);
 }
 	
@@ -37,6 +33,7 @@ matrix_cbranches(const imatrix &I, const coord_list &N, imatrix &M)
 			if (I(start) && M(start) == UNMARKED) {
 				M(start) = nbranches;
 				active_stack.push_back(start);
+				node_stack.clear();
 				node_stack.push_back(start);
 				// search for connected neighbors
 				while (!active_stack.empty()) {
@@ -63,4 +60,12 @@ matrix_cbranches(const imatrix &I, const coord_list &N, imatrix &M)
 		}
 	}
 	return branch_list;
+}
+
+void
+delete_component(imatrix &M, const coord_list &branch)
+{
+	coord_list::const_iterator it;
+	for (it = branch.begin(); it != branch.end(); it++)
+		M(*it) = UNMARKED;
 }
