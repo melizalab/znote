@@ -119,12 +119,12 @@ void window_signal(const Array<T_in,1> &signal, const Array<T_win,1> &window,
 template <typename T1, typename T2>
 void mask_spectrogram(const Array<T1,2> &spec, const Array<T2,2> &mask, Array<T1,2> &out)
 {
+	int n = spec.rows();
 	Range all = Range::all();
 	out.resize(spec.shape());
 	
-	out(Range(0,mask.rows()-1),all) = spec(Range(0,mask.rows()-1),all) * mask;
-	out(Range(spec.rows()-1,spec.rows()-mask.rows(),-1),all) = 
-		spec(Range(spec.rows()-1,spec.rows()-mask.rows(),-1),all) * mask;
+	out(Range(0,n/2),all) = spec(Range(0,n/2),all) * mask;
+	out(Range(n-n/2,n-1),all) = spec(Range(n-n/2,n-1),all) * mask(Range(mask.rows()-1,1,-1),all);
 }
 
 class STFT {
@@ -137,23 +137,46 @@ public:
 	
 	template <typename T_in, typename T_win>
 	const cmatrix& specgram(const Array<T_in,1> &signal, const Array<T_win,1> &window, 
-				const Array<int,1> &grid, int r_loc=0, bool forward=true) {
-
+				const Array<int,1> &grid, int r_loc=0, bool forward=true) 
+	{
 		window_signal(signal, window, grid, buffer, r_loc);
 		execute_transform(forward);
 		return buffer;
 	}
 
-	template <typename T_in, typename T_win>
+	template <typename T_in, typename T_win, typename T_out>
 	void ispecgram(const Array<T_in,2> &spec, const Array<T_win,1> &window,
-		       const Array<int,1> &grid, int r_loc=0) {}
+		       const Array<int,1> &grid, Array<T_out,1> &output) 
+        {
+		std::copy(spec.begin(), spec.end(), buffer.begin());
+		execute_transform(false);
+		overlap_add(window, grid, output);
+	}
 
-	
+	template <typename T_win, typename T_out>
+	void overlap_add(const Array<T_win,1> &window, const Array<int,1> &grid, Array<T_out,1> &output)
+	{
+		int N = grid(grid.size()-1) + buffer.rows();
+		int Nw = window.size();
+		output.resize(N);
+		Array<T_win,1> diag(N);
+
+		diag = 0;
+		output = 0;
+		for (int col = 0; col < buffer.cols(); col++) {
+			output(Range(grid(col),grid(col)+Nw)) = window * buffer(Range::all(),col);
+			diag(Range(grid(col),grid(col)+Nw)) += blitz::sqr(window);
+		}
+		output /= diag;
+	}
+
 	const cmatrix& get_buffer() const { return buffer; }
 
 
 protected:
 	void execute_transform(bool forward=true);
 };
+
+bool is_hermitian(const cvector &vec, double tol=1e-10);
 
 #endif

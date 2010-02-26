@@ -175,13 +175,18 @@ main(int argc, char **argv) {
 
  		cmatrix masked;
  		mask_spectrogram(stft.get_buffer(), mask, masked);
- 		sprintf(buf, "%s_feature_%03d.bin", sfroot.c_str(), feat_nums(i));
- 		write_bin(buf, masked);
 		cout << '\t' << log10(blitz::max(abs(masked))) * 10
-		     << '\t' << feature.size() << endl;
+		     << '\t' << feature.size();
 
-// 		dvector output;
-// 		//stft.ispecgram(masked, window, grid, output);
+ 		cvector output;
+ 		stft.ispecgram(masked, window, grid, output);
+ 		sprintf(buf, "%s_feature_%03d.bin", sfroot.c_str(), feat_nums(i));
+ 		write_bin(buf, stft.get_buffer());
+
+		sprintf(buf, "%s_feature_%03d.wav", sfroot.c_str(), feat_nums(i));
+		write_bin(buf, blitz::real(output));
+// 		timeseries<double> out(blitz::real(output), pcm.samplerate);
+// 		out.write_pcm(buf, SF_FORMAT_WAV);
  		cout << endl;
 	}
 }

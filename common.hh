@@ -15,6 +15,7 @@ typedef blitz::Array<double,2> dmatrix;
 typedef blitz::Array<double,1> dvector;
 typedef blitz::Array<int,1> ivector;
 typedef blitz::Array<int,2> imatrix;
+typedef blitz::Array<std::complex<double>,1> cvector;
 typedef blitz::Array<std::complex<double>,2> cmatrix;
 
 typedef blitz::TinyVector<int,2> coord;
