@@ -1,5 +1,6 @@
 #include "components.hh"
 #include <blitz/tinyvec-et.h>
+#include <set>
 
 void
 ellipse_neighborhood(coord_list &indices, int n_row, int n_col)
@@ -27,8 +28,8 @@ matrix_cbranches(const imatrix &I, const coord_list &N, imatrix &M)
 	
 	M.resize(I.shape());
 	M = UNMARKED;
-	for (int r = 0; r < I.rows(); r++) {
-		for (int c = 0; c < I.cols(); c++) {
+	for (int c = 0; c < I.cols(); c++) {
+		for (int r = 0; r < I.rows(); r++) {
 			coord start(r,c);
 			if (I(start) && M(start) == UNMARKED) {
 				M(start) = nbranches;
@@ -62,10 +63,70 @@ matrix_cbranches(const imatrix &I, const coord_list &N, imatrix &M)
 	return branch_list;
 }
 
+clist_vector
+get_components(const imatrix &labels)
+{
+	int max_index = blitz::max(labels);
+	clist_vector branches;
+	for (int i = 0; i <= max_index; i++) {
+		coord_list branch;
+		blitz::find(branch, labels==i);
+		branches.push_back(branch);
+	}
+	return branches;
+}
+
 void
 delete_component(imatrix &M, const coord_list &branch)
 {
 	coord_list::const_iterator it;
 	for (it = branch.begin(); it != branch.end(); it++)
 		M(*it) = UNMARKED;
+}
+
+void
+renumber_components(imatrix &M)
+{
+	int i;
+	std::set<int> unique_vals(M.begin(),M.end());
+	unique_vals.erase(-1);
+	std::set<int>::const_reverse_iterator rit = unique_vals.rbegin();
+
+ 	ivector index(*rit+1);
+ 	for (i=unique_vals.size()-1; rit != unique_vals.rend(); --i, ++rit)
+ 		index(*rit) = i;
+
+	imatrix::iterator it = M.begin();
+	for (; it != M.end(); it++) {
+		if (*it > -1) 
+			*it = index(*it);
+	}
+}			
+
+void 
+make_mask(const coord_list &component, const dmatrix &mask, const coord &mask_center, dmatrix &out)
+{
+	int j,k;
+	coord_list::const_iterator it = component.begin();
+	for (; it !=component.end(); it++) {
+		for (j = 0; j < mask.rows(); j++) {
+			for (k = 0; k < mask.cols(); k++) {
+				coord tgt(*it + coord(j,k));
+				if (inrange(out, tgt))
+					out(tgt) = fmax(out(tgt),mask(j,k));
+			}
+		}
+	}
+}
+
+void
+mask_sum(const clist_vector &components, const dmatrix &mask, const coord &mask_center, dmatrix &out)
+{
+	out = 0;
+	dmatrix temp(out.shape());
+	for (unsigned int i = 0; i < components.size(); i++) {
+		temp = 0;
+		make_mask(components[i], mask, mask_center, temp);
+		out += temp;
+	}
 }

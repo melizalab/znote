@@ -11,35 +11,23 @@
  */
 
 template<typename T>
-class bin_reader {
-private:
+int read_bin(const char *filename, blitz::Array<T,2> &out) {
 	FILE *fp;
-public:
-	bin_reader(const char *filename) {
-		if ((fp = fopen(filename, "rb")) == NULL)
-			throw std::runtime_error("File does not exist");
-	}
-	~bin_reader() {
-		fclose(fp);
-	}
-	blitz::Array<T,2> read() {
-		int count, expected;
-		int shape[2];
-		fread(shape, sizeof(int), 2, fp);
-		blitz::TinyVector<int,2> tshape(shape[0], shape[1]);
-		expected = shape[0]*shape[1];
+	int count, expected;
+	int shape[2];
 
-		T *data = new T[expected];
-		count = fread(data, sizeof(T), expected, fp);
+	if ((fp = fopen(filename, "rb")) == NULL)
+		throw std::runtime_error("File does not exist");
+	fread(shape, sizeof(int), 2, fp);
+	blitz::TinyVector<int,2> tshape(shape[0], shape[1]);
+	expected = shape[0]*shape[1];
 
-		if (count < expected)
-			fprintf(stderr, "Only read %d values, expected %d; wrong data type?\n",
-				count, expected);
-		blitz::Array<T,2> out(data, tshape, blitz::deleteDataWhenDone);
-		rewind(fp);
-		return out;
-	}
-};
+	out.resize(tshape);
+	count = fread(out.data(), sizeof(T), expected, fp);
+	fclose(fp);
+	return count;
+}
+
 
 template<typename T, int N>
 int write_bin(const char *filename, const blitz::Array<T,N> &data) {

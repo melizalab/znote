@@ -1,5 +1,5 @@
 
-#include "math.hh"
+#include "common.hh"
 #include "blitz_io.hh"
 #include "spect.hh"
 #include "components.hh"
@@ -7,7 +7,6 @@
 #include <iostream>
 
 using namespace std;
-using namespace blitz::tensor;
 
 static const string program_name = "znote_label";
 static const string program_version = "1.1.0";
@@ -20,7 +19,7 @@ double nw = 3.5;
 
 double f_nbhd_r = 200.0;
 double t_nbhd_r = 2.0;
-double min_area = 400.0;
+double min_area = 4000.0;
 
 string file_name;
 
@@ -80,28 +79,24 @@ main(int argc, char **argv) {
 
 	dmatrix spec;
  	coord_list nbhd;
-	imatrix components;
+	imatrix labels;
 	int freq_r, time_r, min_size;
-	unsigned int fidx;
 	string froot, fext;
 
 	cout << "* Program: " << program_name << endl
 	     << "* Version: " << program_version << endl
 	     << "* Input: " << file_name << endl;
 	
-	fidx = file_name.rfind(".");
-	if (fidx==string::npos) {
+	if (splitext(file_name, froot, fext) < 0) {
 		cout << "* ERROR: Unable to determine input file type" << endl;
 		exit(-1);
 	}
-	froot = file_name.substr(0,fidx);
-	fext = file_name.substr(fidx);
 	if (fext!=".bin") {
 		timeseries<short> pcm(file_name.c_str());
 		cout <<  "* Samples: " << pcm.samples.size() << endl
 		     <<  "* Samplerate: " << pcm.samplerate << endl
-		     <<  "* Nfft: " << nfft << endl
-		     <<  "* Shift: " << fft_shift << endl
+		     <<  "* Nfft: " << nfft << " samples" << endl
+		     <<  "* Shift: " << fft_shift << " samples" << endl
 		     <<  "* Tapers: " << ntapers << endl
 		     <<  "* Time-freq product: " << nw << endl
 		     <<  "* Minimum feature area: " << min_area * 0.001 << " Hz-ms " << endl;
@@ -113,7 +108,7 @@ main(int argc, char **argv) {
 		
 	}
 	else {
-		spec.reference(bin_reader<double>(file_name.c_str()).read());
+		read_bin(file_name.c_str(), spec);
 		freq_r = (int)(f_nbhd_r);
 		time_r = (int)(t_nbhd_r);
 		min_size = (int)min_area;
@@ -137,24 +132,28 @@ main(int argc, char **argv) {
 
 	ellipse_neighborhood(nbhd, freq_r, time_r);
 
- 	clist_vector clist(matrix_cbranches(tspec, nbhd, components));
+ 	clist_vector clist(matrix_cbranches(tspec, nbhd, labels));
 	cout << "* Extracted features: " << clist.size() << endl
 	     << "* Minimum size: " << min_size << endl 
 	     << "------------------------------------" << endl
-	     << "feat\tpixels\tstart_row\tstart_col" << endl;
+	     << "feat\tpixels\trow\tcol" << endl;
 	clist_vector::const_iterator it = clist.begin();
 	for (int i = 0; it != clist.end(); it++, i++) {
+		RectDomain<2> fbounds = component_bounds(*it);
 		cout << i << "\t" << it->size() << "\t";
-		cout << blitz::min(it->extractComponent(int(),0,1)) << "\t";
-		cout << blitz::min(it->extractComponent(int(),1,1)) << "\t";
+		cout << fbounds.lbound(0) << "\t";
+		cout << fbounds.lbound(1) << "\t";
 		if (it->size() < min_size) {
-			delete_component(components, *it);
+			delete_component(labels, *it);
 			cout << "dropped";
 		}
 		cout << endl;
 	}
+	renumber_components(labels);
+	cout << "------------------------------------" << endl
+	     << "* Total features: " << blitz::max(labels) << endl;
 
- 	write_bin((froot + "_labels.bin").c_str(),components);
+ 	write_bin((froot + "_labels.bin").c_str(),labels);
 	
 }
 
