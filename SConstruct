@@ -8,7 +8,8 @@ lib_path = ['/lib','/usr/lib','/usr/lib64','/usr/local/lib','/usr/local/lib64','
 
 env = Environment(LIBPATH = lib_path,
                   CCFLAGS = ['-O2','-Wall'],
-                  LIBS=['m','blitz','sndfile','fftw3','lapack',])
+#                  LIBS=['m','blitz','sndfile','fftw3','lapack',])  # this line for mac os x
+                  LIBS=['m','blitz','sndfile','fftw3','atlas','cblas','f77blas','lapack']) # for linux
 env.Append(CPPPATH = include_path)
 if threads > 1:
     env.Append(CCFLAGS = '-DTHREADS=%d' % threads,
