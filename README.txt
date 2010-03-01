@@ -37,15 +37,17 @@ Hierarchical Framework". J Neurophysiology, doi:10.1152/jn.00464.2009
 
 Use of the code is licensed for non-commercial purposes under the
 Creative Commons Attribution-Noncommercial-Share Alike 3.0 United
-States License
-(http://creativecommons.org/licenses/by-nc-sa/3.0/us/). For other
-purposes, contact the authors at:
+States License (http://creativecommons.org/licenses/by-nc-sa/3.0/us/). 
+For other purposes, contact the authors at:
 
 * Dan Meliza (dan@meliza.org)
 * Zhiyi Chi (zchi@merlot.stat.uconn.edu)
+* Dan Margoliash (d-margoliash@uchicago.edu)
 
 ******** Installation
 
 znote depends on the Blitz C++ array library for data manipulation,
 the FFTW library for computing FFT transforms, and the libsndfile
-library for reading acoustic signal data.
+library for reading acoustic signal data.  It also requires the LAPACK
+fucntions dsterf and dgtsv to generate the discrete prolate spherical
+sequences used by znote_label

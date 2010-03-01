@@ -1,8 +1,17 @@
 #ifndef MTM_H
 #define MTM_H
-/*
- * mtm.hh - C++ library for calculating multitaper spectrograms.
+/**
+ * @file   mtm.hh
+ * @author Daniel Meliza <dmeliza@uchicago.edu>
+ * @date   Mon Mar  1 13:33:47 2010
+ * 
+ * @brief  C++ library for calculating multitaper spectrograms.
+ * 
+ * Copyright C Daniel Meliza, Z Chi 2010.  Licensed for use under Creative
+ * Commons Attribution-Noncommercial-Share Alike 3.0 United States
+ * License (http://creativecommons.org/licenses/by-nc-sa/3.0/us/).
  */
+#include <blitz/array.h>
 #include <fftw3.h>
 
 /**
@@ -11,32 +20,30 @@
  * functions), output buffers, and the FFTW plan
  */
 typedef struct {
-	int nfft;
-	int npoints;
-	int ntapers;
-	double *tapers;
-	double *lambdas;
-	double *buf;
-	fftw_plan plan;
+	int nfft;		/**< number of points in the transform */
+	int npoints;		/**< number of points in the tapers */
+	int ntapers;		/**< number of tapers */
+	double *tapers;		/**< pointer to tapers (npoints x ntapers) */
+	double *lambdas;	/**< pointer to taper weights (ntapers) */
+	double *buf;		/**< transform buffer (npoints x ntapers) */
+	fftw_plan plan;		/**< fftw plan */
 } mfft;
 
 /* initialization and destruction functions */
 
 /**
- * Initialize a multitaper mtm transform using preallocated tapers (i.e. with dpss()))
+ * Initialize a multitaper mtm transform using preallocated tapers
+ * (i.e. with dpss())). NB: pointers to tapers and lambdas are now
+ * owned by the return mtfft structure
  *
- * Inputs:
- *   nfft - number of points in the transform
- *   npoints - number of points in the tapers (windows)
- *   ntapers - number of tapers
- *   *tapers - pointer to npoints*ntapers array of windowing functions
- *   *lambdas - eigenvalues for tapers; if NULL, assign weight of 1.0 to each taper
+ * @param nfft - number of points in the transform
+ * @param npoints - number of points in the tapers (windows)
+ * @param ntapers - number of tapers
+ * @param *tapers - pointer to npoints*ntapers array of windowing functions
+ * @param *lambdas - eigenvalues for tapers; if NULL, assign weight of 1.0 to each taper
  *
- * Returns:
- *   pointer to mfft_params structure (owned by caller)
- *
- * Note:
- *   pointers to tapers and lambdas are now owned by the return mtfft structure
+ * @return pointer to mfft_params structure (owned by caller)
+ *   
  */
 mfft* mtm_init(int nfft, int npoints, int ntapers, double* tapers, double *lambdas);
 
@@ -44,13 +51,11 @@ mfft* mtm_init(int nfft, int npoints, int ntapers, double* tapers, double *lambd
  * Initialize a mtfft transform using DPSS tapers (i.e. for a standard
  * multitaper transform)
  *
- * Inputs:
- *   nfft - number of points in the transform/dpss tapers
- *   nw   - time-frequency parameter
- *   ntapers - number of tapers to keep
+ * @param nfft number of points in the transform/dpss tapers
+ * @param nw time-frequency parameter (should be a half-integer, e.g. 3.5)
+ * @param ntapers number of tapers to keep (should be no more than nw/2-1)
  *
- * Returns:
- *   pointer to mfft structure (owned by caller)
+ * @return pointer to mfft structure (owned by caller)
  */
 mfft* mtm_init_dpss(int nfft, double nw, int ntapers);
 
@@ -59,6 +64,8 @@ mfft* mtm_init_dpss(int nfft, double nw, int ntapers);
  * references to the tapers are considered to be owned by the
  * structure, so if they were calculated elsewhere do not attempt to
  * access them after calling this function.
+ *
+ * @param mtm  structure to free up
  */
 void mtm_destroy(mfft *mtm);
 
@@ -69,13 +76,11 @@ void mtm_destroy(mfft *mtm);
  * single taper FFTs, if the mfft structure has been
  * initialized with a single window
  *
- * Inputs:
- *    mtm - parameters for the transform
- *    data - input data (double-precision floating points)
- *    nbins - the number of time points in the signal
+ * @param mtm    parameters for the transform
+ * @param data   input data (double-precision floating points)
+ * @param nbins  the number of time points in the signal
  *
- * Returns:
- *    total power in signal (used in computing adaptive power spectra)
+ * @return total power in signal (used in computing adaptive power spectra)
  */
 template <typename T>
 double mtfft(mfft *mtm, const T *data, int nbins) 
@@ -87,7 +92,6 @@ double mtfft(mfft *mtm, const T *data, int nbins)
 	int nt = (nbins < size) ? nbins : size;
 	double pow = 0.0;
 
-	//printf("Windowing data (%d points, %d tapers)\n", nt, mtm->ntapers);
 	for (i = 0; i < mtm->ntapers; i++) {
 		for (j = 0; j < nt; j++) {
 			mtm->buf[j+i*nfft] = mtm->tapers[j+i*size] * data[j];
@@ -97,7 +101,6 @@ double mtfft(mfft *mtm, const T *data, int nbins)
 
 	pow /= mtm->ntapers;
 	// zero-pad rest of buffer
-	//printf("Zero-pad buffer with %d points\n", mtm->nfft - nt);
 	for (i = 0; i < mtm->ntapers; i++) {
 		for (j = nt; j < mtm->nfft; j++)
 			mtm->buf[j+i*nfft] = 0.0;
@@ -117,13 +120,10 @@ double mtfft(mfft *mtm, const T *data, int nbins)
  * method attempts to fit the contribution from each taper to match
  * the total power in the signal.
  *
- * Inputs:
- *   mtm - mfft structure after running mtfft
- *   sigpow - total power in the signal. If zero or less, uses high-res method
- *
- * Outputs:
- *   pow - power spectral density (linear scale) of the signal. Needs to be
- *         preallocated, with dimensions at least nfft/2 + 1;
+ * @param mtm    mfft structure after running mtfft
+ * @param sigpow total power in the signal. If zero or less, uses high-res method
+ * @param pow    output, power spectral density (linear scale) of the signal. Needs to be
+ *               preallocated, with dimensions at least nfft/2 + 1;
  */
 void mtpower(const mfft *mtm, double *pow, double sigpower);
 
@@ -132,15 +132,13 @@ void mtpower(const mfft *mtm, double *pow, double sigpower);
  *  This function 'fills' a spectrogram by calculating the PSD for each
  *  frame in the signal.
  *
- * Inputs:
- *  mtm - mfft structure
- *  samples - input signal
- *  nsamples - number of points in input buffer
- *  shift    - number of samples to shift in each frame
- *  adapt    - if true, use adaptive averaging between tapers (otherwise 'high-res')
+ *  @param mtm      mfft structure
+ *  @param samples  input signal
+ *  @param nsamples number of points in input buffer
+ *  @param shift    number of samples to shift in each frame
+ *  @param adapt    if true, use adaptive averaging between tapers (otherwise 'high-res')
  *
- * Outputs:
- *  spec     - reassigned spectrogram. needs to be allocated and zero-filled before calling
+ *  @param spec     output, reassigned spectrogram. needs to be allocated and zero-filled before calling
  *
  */
 template <typename T>
@@ -155,6 +153,30 @@ void mtm_spec(mfft *mtm, double *spec, const T *samples, int nsamples, int shift
 		sigpow = mtfft(mtm, samples+(t*shift), nsamples-(t*shift));
 		mtpower(mtm, spec+(t*real_count), (adapt) ? sigpow : 0.0);
 	}
+}
+
+
+/** 
+ * Compute multitaper spectrogram of a signal
+ * 
+ * @param signal 1D array of real-valued samples
+ * @param nfft number of points in the analysis window
+ * @param nw time-frequency product (should be half-integer)
+ * @param ntapers number of tapers (should be no more than nw*2-1)
+ * @param shift number of points between analysis frames
+ * @param adapt compute adaptive PSDs (1) or high-res (0)
+ * 
+ * @return array of doubles with dimensions (nfft/2+1, npoints/shift)
+ */
+template <typename T>
+blitz::Array<double,2> mtmspec(const blitz::Array<T,1> &signal, int nfft, double nw, int ntapers,
+			       int shift, int adapt=1) 
+{
+	mfft *mtmh = mtm_init_dpss(nfft, nw, ntapers);
+	blitz::Array<double,2> out(nfft / 2 + 1, signal.size() / shift, blitz::ColumnMajorArray<2>());
+	mtm_spec(mtmh, out.data(), signal.data(), signal.size(), shift, adapt);
+	mtm_destroy(mtmh);
+	return out;
 }
 
 

@@ -1,3 +1,12 @@
+/**
+ * @file   dpss.c
+ * @author Daniel Meliza <dmeliza@uchicago.edu>
+ * @date   Mon Mar  1 13:42:31 2010
+ * 
+ * Copyright C Daniel Meliza, Z Chi 2010.  Licensed for use under Creative
+ * Commons Attribution-Noncommercial-Share Alike 3.0 United States
+ * License (http://creativecommons.org/licenses/by-nc-sa/3.0/us/)
+ */
 
 #include <stdlib.h>
 #include <stdio.h>

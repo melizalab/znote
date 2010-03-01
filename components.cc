@@ -1,3 +1,13 @@
+/**
+ * @file   components.cc
+ * @author Daniel Meliza <dmeliza@uchicago.edu>
+ * @date   Mon Mar  1 13:38:31 2010
+ * 
+ * Copyright C Daniel Meliza, Z Chi 2010.  Licensed for use under Creative
+ * Commons Attribution-Noncommercial-Share Alike 3.0 United States
+ * License (http://creativecommons.org/licenses/by-nc-sa/3.0/us/).
+ * 
+ */
 #include "components.hh"
 #include <blitz/tinyvec-et.h>
 #include <set>
@@ -67,10 +77,19 @@ clist_vector
 get_components(const imatrix &labels)
 {
 	int max_index = blitz::max(labels);
+	std::vector<coord_vector> branchv(max_index+1);
+	for (int r = 0; r < labels.rows(); r++) {
+		for (int c = 0; c < labels.cols(); c++) {
+			coord p(r,c);
+			if (labels(p) != UNMARKED)
+				branchv[labels(p)].push_back(p);
+		}
+	}
+
 	clist_vector branches;
 	for (int i = 0; i <= max_index; i++) {
-		coord_list branch;
-		blitz::find(branch, labels==i);
+		coord_list branch(branchv[i].size());
+		std::copy(branchv[i].begin(), branchv[i].end(), branch.begin());
 		branches.push_back(branch);
 	}
 	return branches;

@@ -1,5 +1,20 @@
-#include <complex>
+/**
+ * @file   spect.cc
+ * @author Daniel Meliza <dmeliza@uchicago.edu>
+ * @date   Mon Mar  1 13:38:31 2010
+ * 
+ * Copyright C Daniel Meliza, Z Chi 2010.  Licensed for use under Creative
+ * Commons Attribution-Noncommercial-Share Alike 3.0 United States
+ * License (http://creativecommons.org/licenses/by-nc-sa/3.0/us/).
+ * 
+ */
 #include "spect.hh"
+#include <complex>
+
+#if THREADS>1
+static int t = fftw_init_threads();
+#endif
+
 
 STFT::STFT(int nfft, int nframes, int nthreads)
 {
@@ -10,15 +25,19 @@ STFT::STFT(int nfft, int nframes, int nthreads)
 	ivector n(nframes);
 	n = nfft;
 
-	//fftw_plan_with_nthreads(nthreads);
+	int planner_flag = (nframes > 5000) ? FFTW_MEASURE : FFTW_ESTIMATE;
+
+#if THREADS>1
+	fftw_plan_with_nthreads(nthreads);
+#endif
 	fwd  = fftw_plan_many_dft(1, n.data(), nframes,
 				  buf, NULL, nframes, 1,
 				  buf, NULL, nframes, 1,
-				  FFTW_FORWARD, FFTW_MEASURE);
+				  FFTW_FORWARD, planner_flag);  // change to FFTW_MEASURE for huge files
 	rev  = fftw_plan_many_dft(1, n.data(), nframes,
 				  buf, NULL, nframes, 1,
 				  buf, NULL, nframes, 1,
-				  FFTW_BACKWARD, FFTW_MEASURE);
+				  FFTW_BACKWARD, planner_flag);
 }
 
 STFT::~STFT()
@@ -27,14 +46,6 @@ STFT::~STFT()
 	fftw_destroy_plan(rev);
 	fftw_free(buffer.data());
 }
-
-void
-STFT::execute_transform(bool forward)
-{
-	fftw_execute(forward ? fwd : rev);
-	if (!forward) buffer /= buffer.rows();
-}
-
 
 bool
 is_hermitian(const cvector &vec, double tol)

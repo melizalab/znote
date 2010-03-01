@@ -1,10 +1,23 @@
-
+/**
+ * @file   znote_extract.cc
+ * @author Daniel Meliza <dmeliza@uchicago.edu>
+ * @date   Mon Mar  1 13:38:31 2010
+ * 
+ * Copyright C Daniel Meliza, Z Chi 2010.  Licensed for use under Creative
+ * Commons Attribution-Noncommercial-Share Alike 3.0 United States
+ * License (http://creativecommons.org/licenses/by-nc-sa/3.0/us/).
+ * 
+ */
 #include "common.hh"
 #include "blitz_io.hh"
 #include "spect.hh"
 #include "components.hh"
 #include <getopt.h>
 #include <iostream>
+
+#ifndef THREADS
+#define THREADS 1
+#endif
 
 using namespace std;
 
@@ -100,7 +113,7 @@ main(int argc, char **argv) {
 		exit(-1);
 	}
 
-	timeseries<double> pcm(signal_file);
+	timeseries<double> pcm(signal_file.c_str());
 	cout << "* Samples: " << pcm.samples.size() << endl
 	     << "* Samplerate: " << pcm.samplerate << endl;
 	
@@ -129,7 +142,7 @@ main(int argc, char **argv) {
 	ivector grid;
 	arange(grid,0,pcm.samples.size(),fft_shift);
 
- 	STFT stft(nfft, grid.size());
+ 	STFT stft(nfft, grid.size(), THREADS);
 	stft.specgram(pcm.samples, window, grid);
 	cmatrix spec(stft.get_buffer().copy());
 
@@ -140,11 +153,12 @@ main(int argc, char **argv) {
 	     << "* Time rolloff: " << t_hbdw << " ms (" << tn << " bins)" << endl;
 	dmatrix gfilt(fn, tn);
 	gauss2d(gfilt, double(fn)/4, double(tn)/4);
-	cout << gfilt << endl;
 	
 	dmatrix masked_tot(labels.shape());
 	mask_sum(features,gfilt,coord(fn/2,tn/2),masked_tot);
 	masked_tot = blitz::max(masked_tot,1.0);
+
+	cout << "* Max feature overlap: " << blitz::max(masked_tot) << endl;
 	
 	ivector feat_nums(1);
 	if (feat_num > -1)
@@ -154,8 +168,8 @@ main(int argc, char **argv) {
 
 	cout << "-----------------------------------------" << endl
 	     << "feat" << '\t' << "t.onset" << '\t' << "f.onset" << '\t' 
-	     << "t.size" << '\t' << "f.size" << '\t'
-	     << "maxDB" << '\t' << "area" << '\t' << "samples" << endl;
+	     << "t.size" << '\t' << "maxDB" << '\t'
+	     << "f.size" << '\t' << "area" << '\t' << "samples" << endl;
 
 	dmatrix mask(labels.shape());
 	dvector recon(pcm.samples.size());
@@ -169,15 +183,13 @@ main(int argc, char **argv) {
 		     << '\t' << fbounds.lbound(0) //row2freq(fmin,nfft,pcm.samplerate)
 		     << '\t' << fbounds.ubound(1) - fbounds.lbound(1) 
 		     << '\t' << fbounds.ubound(0) - fbounds.lbound(0);
-		
+		cout.flush();
+
  		mask = 0;
  		make_mask(feature,gfilt,coord(fn/2,tn/2),mask);
  		mask /= masked_tot;
-
- 		cmatrix masked;
- 		mask_spectrogram(spec, mask, masked);
-		cout << '\t' << log10(blitz::max(abs(masked))) * 10
-		     << '\t' << feature.size();
+		cout << '\t' << feature.size();
+		cout.flush();
 
  		dvector output;
 		int start_col, stop_col;
@@ -189,7 +201,11 @@ main(int argc, char **argv) {
 			start_col = max(0,fbounds.lbound(1)-pad_col);
 			stop_col = min(grid.size()-1,fbounds.ubound(1)+pad_col);
 		}
-		stft.ispecgram(masked, window, grid, output, start_col, stop_col);
+		double maxpow = stft.ispecgram(spec, mask);
+ 		cout << '\t' << log10(maxpow) * 10;
+ 		cout.flush();
+		
+		stft.overlap_add(window, grid, output, start_col, stop_col);
 
 		sprintf(buf, "%s_feature_%03d.wav", sfroot.c_str(), feat_nums(i));
  		

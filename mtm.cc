@@ -1,7 +1,12 @@
-/*
- * mtm.c - functions for computing FFTs with multiple tapers using FFTW
- *
- * copyright C.D. Meliza (dmeliza@uchicago.edu), 2008-2009
+/**
+ * @file   mtm.cc
+ * @author Daniel Meliza <dmeliza@uchicago.edu>
+ * @date   Mon Mar  1 13:38:31 2010
+ * 
+ * Copyright C Daniel Meliza, Z Chi 2010.  Licensed for use under Creative
+ * Commons Attribution-Noncommercial-Share Alike 3.0 United States
+ * License (http://creativecommons.org/licenses/by-nc-sa/3.0/us/).
+ * 
  */
 #include <cstdio>
 #include <cmath>

@@ -1,6 +1,16 @@
 #ifndef COMMON_H
 #define COMMON_H
-
+/**
+ * @file   common.hh
+ * @author Daniel Meliza <dmeliza@uchicago.edu>
+ * @date   Mon Mar  1 13:33:47 2010
+ * 
+ * @brief  Define common types and functions for znote
+ * 
+ * Copyright C Daniel Meliza, Z Chi 2010.  Licensed for use under Creative
+ * Commons Attribution-Noncommercial-Share Alike 3.0 United States
+ * License (http://creativecommons.org/licenses/by-nc-sa/3.0/us/).
+ */
 #include <blitz/array.h>
 #include <cmath>
 #include <complex>
@@ -22,7 +32,16 @@ typedef blitz::TinyVector<int,2> coord;
 typedef blitz::Array<coord,1> coord_list;
 typedef std::vector<coord> coord_vector;
 typedef std::vector<coord_list> clist_vector;
+typedef std::vector<coord_vector> cvec_vector;
 
+/** 
+ * Determine if coordinates are in range for an array.
+ * 
+ * @param A  Array to check
+ * @param I  Indices to check
+ * 
+ * @return true if A.lbound(i) <= I(i) <= A.ubound(i) for i in [0,N_rank)
+ */
 template <typename T, int N_rank> inline
 bool inrange(const blitz::Array<T,N_rank> &A, const blitz::TinyVector<int,N_rank> &I) 
 {
@@ -31,6 +50,14 @@ bool inrange(const blitz::Array<T,N_rank> &A, const blitz::TinyVector<int,N_rank
 	return true;
 }
 
+/** 
+ * Construct an evenly spaced vector across a range.
+ * 
+ * @param output Output vector. Resized and overwritten.
+ * @param start Start point
+ * @param stop Stop point (exclusive)
+ * @param step Step size
+ */
 template <typename T> inline
 void arange(blitz::Array<T,1> &output, int start, int stop, int step=1) 
 {
@@ -48,6 +75,15 @@ void arange(blitz::Array<T,1> &output, int start, int stop, int step=1)
 // 	for (++start;start!=stop;++start) {
 // 		if (*start > max_val)
 
+/** 
+ * Split a file name into root and extension.
+ * 
+ * @param in input string
+ * @param froot file name root
+ * @param ext file name extension
+ * 
+ * @return split point
+ */
 inline
 unsigned int splitext(const std::string &in, std::string &froot, std::string &ext) {
 	unsigned int fidx = in.rfind(".");
@@ -58,10 +94,5 @@ unsigned int splitext(const std::string &in, std::string &froot, std::string &ex
 	return fidx;
 }
 	
-
-// template <typename T> inline
-// T& MAX(T &x, T &y) {
-// 	return (x > y) ? x : y;
-// }
 
 #endif

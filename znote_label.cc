@@ -1,7 +1,16 @@
-
+/**
+ * @file   znote_label.cc
+ * @author Daniel Meliza <dmeliza@uchicago.edu>
+ * @date   Mon Mar  1 13:38:31 2010
+ * 
+ * Copyright C Daniel Meliza, Z Chi 2010.  Licensed for use under Creative
+ * Commons Attribution-Noncommercial-Share Alike 3.0 United States
+ * License (http://creativecommons.org/licenses/by-nc-sa/3.0/us/).
+ * 
+ */
 #include "common.hh"
 #include "blitz_io.hh"
-#include "spect.hh"
+#include "mtm.hh"
 #include "components.hh"
 #include <getopt.h>
 #include <iostream>
@@ -139,7 +148,7 @@ main(int argc, char **argv) {
 	     << "feat\tpixels\trow\tcol" << endl;
 	clist_vector::const_iterator it = clist.begin();
 	for (int i = 0; it != clist.end(); it++, i++) {
-		RectDomain<2> fbounds = component_bounds(*it);
+		blitz::RectDomain<2> fbounds = component_bounds(*it);
 		cout << i << "\t" << it->size() << "\t";
 		cout << fbounds.lbound(0) << "\t";
 		cout << fbounds.lbound(1) << "\t";
