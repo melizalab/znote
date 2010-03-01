@@ -108,7 +108,7 @@ main(int argc, char **argv) {
 		     <<  "* Shift: " << fft_shift << " samples" << endl
 		     <<  "* Tapers: " << ntapers << endl
 		     <<  "* Time-freq product: " << nw << endl
-		     <<  "* Minimum feature area: " << min_area * 0.001 << " Hz-ms " << endl;
+		     <<  "* Minimum feature area: " << min_area * 0.001 << " kHz-ms " << endl;
 	
 		spec.reference(mtmspec(pcm.samples, nfft, nw, ntapers, fft_shift));
 		freq_r = (int)(f_nbhd_r * nfft / pcm.samplerate);
