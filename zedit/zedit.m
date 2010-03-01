@@ -14,21 +14,24 @@ function [] = zedit(signalfile, varargin)
 % Commons Attribution-Noncommercial-Share Alike 3.0 United States
 % License (http://creativecommons.org/licenses/by-nc-sa/3.0/us/).
 
-error(nargchk(1,2,nargin));
+if nargin < 1
+  error(['Need an input file']);
+end
 
 if exist(signalfile,'file') ~= 2
      error(['Input file ' signalfile ' does not exist']);
 end
 
+varargin{:}
 [p pcmroot pcmext] = fileparts(signalfile);
-params = mergestruct(zedit_params, varargin{:});
+params = zedit_params;
 
 % open the GUI
 figtag = [mfilename '_' pcmroot];
 fig = findobj('tag',figtag);
 if isempty(fig)
      fig = open([mfilename '.fig']);
-     set(fig,'tag',figtag,'name',signalfile,'renderer','opengl');
+     set(fig,'tag',figtag,'name',signalfile);%,'renderer','opengl');
      handles = guihandles(fig);
      h = findobj(fig,'style','pushbutton');
      set(h,'Callback',@cb_btn);
@@ -60,18 +63,19 @@ update_psd(fig);
 function [] = create_label(fig)
 % computes connected components based on the parameter structure
 params  = guivalue(fig,'params');
-[L,PSD] = fedit_label([params.pcmroot params.pcmext], params);
+[L,PSD] = zlabel([params.pcmroot params.pcmext], params);
 update_psd(fig, PSD);
-% store the label matrix in the guidata
-labels  = guivalue(fig,'labels');
-%setname = sprintf('lbl%2.1f_%d_%d_%d', params.thresh, params.df, ...
-%                  params.dt, params.min_size);
-setname = sprintf('lbl%d_%d_%d', params.df, params.dt, params.min_size);
-labels.(setname) = L;
-guivalue(fig,'labels',labels);
-% update the label list
-update_labelset(fig, setname);
-
+if ~isempty(L)
+  % store the label matrix in the guidata
+  labels  = guivalue(fig,'labels');
+  %setname = sprintf('lbl%2.1f_%d_%d_%d', params.thresh, params.df, ...
+  %                  params.dt, params.min_size);
+  setname = sprintf('lbl%d_%d_%d', params.df, params.dt, params.min_size);
+  labels.(setname) = L;
+  guivalue(fig,'labels',labels);
+  % update the label list
+  update_labelset(fig, setname);
+end
 
 
 
@@ -165,15 +169,16 @@ function [] = update_psd(fig, spectro)
 % spectro, which is useful when computing labels.
 params  = guivalue(fig,'params');
 if nargin < 2
-     spectro = fedit_psd([params.pcmroot params.pcmext], params);
+     [spectro,T,F] = zpsd([params.pcmroot params.pcmext], params);
+else
+  h_spec = findobj(fig,'tag','spec');
+  T = get(h_spec,'XData');
+  F = get(h_spec,'YData');
 end
 
 % plot it to the axes
 ax = guivalue(fig,'axes');
 delete(kids(ax));
-T = linspace(0,params.Fs/2,size(spectro,1));
-F = linspace(0,size(spectro,2)*params.fftshift*1000/params.Fs, ...
-             size(spectro,2));
 
 imagesc(F,T,spectro,'tag','spec','parent',ax);
 xlabel('Time (ms)');ylabel('F (Hz)');
@@ -376,62 +381,6 @@ elseif strcmp(tag,'btn_sort_feat')
      guivalue(obj,'labels',labels);
      update_featurelist(gcbf, labelset);
      fprintf('Resorted features\n');
-     
-elseif strcmp(tag,'btn_extract_feat')
-     % all selected features are combined into a single feature,
-     % written to a binfile, and then extracted into a file named
-     % by the user
-     if isempty(labelset) || isempty(selected)
-          return
-     end
-     
-     pos = get(gcbf,'position');
-     [fn pn] = uiputfile('*.pcm','Location',pos(1:2));
-     if isnumeric(fn)
-          return
-     end
-     
-     labels   = guivalue(obj,'labels');
-     lblmat   = ismember(labels.(labelset), selected) - 1;
-     [pn fn ext] = fileparts(fullfile(pn, fn));
-     lblfile  = fullfile(pn,[fn '_mask.bin']);
-     bomatrix(lblmat, lblfile, 'int');
-     update_params(gcbf);
-     
-     params = guivalue(obj,'params');     
-     fedit_extract([params.pcmroot params.pcmext], lblfile, 0, ...
-                   params);
-     % rename the files if possible
-     pnfn = [params.pcmroot '_feature_000.pcm'];
-     if exist(pnfn,'file') == 2
-          system(['mv ' pnfn ' ' fullfile(pn,fn) '.pcm']);          
-     end
-
-     pnfn = [params.pcmroot '_residue_000.pcm'];
-     if exist(pnfn,'file') == 2
-          system(['mv ' pnfn ' ' fullfile(pn,fn) '_res.pcm']);
-     end
-     
-     
-elseif strcmp(tag, 'btn_extract_all')
-     % in this case we extract all the features defined in the
-     % labelset, and output a reconstruction as well
-     if isempty(labelset) || isempty(selected)
-          return
-     end
-     labels   = guivalue(obj,'labels');
-     lblmat   = labels.(labelset) - 1;
-     update_params(gcbf);
-     params = guivalue(obj,'params');
-     
-     lblfile  = [params.pcmroot '_tmpmask.bin'];
-     bomatrix(lblmat, lblfile, 'int');
-     
-     params = guivalue(obj,'params');
-     fedit_extract([params.pcmroot params.pcmext], lblfile, 1, ...
-                   params);
-     % delete the temporary mask file
-     delete(lblfile);
      
 else
      fprintf('Callback not implemented for object %s\n', tag);

@@ -1,49 +1,34 @@
-function [L,PSD] = fedit_label(pcmfile, varargin)
+function [L,PSD] = zlabel(signalfile, varargin)
 %
-% FEDIT_LABEL  Helper to FEDIT GUI for labelling components in a
+% ZLABEL  Helper to FEDIT GUI for labelling components in a
 % spectrogram.
 %
-% [L,PSD] = FEDIT_LABEL(pcmfile, params)   
+% [L,PSD] = ZLABEL(signalfile, params)   
 %
-% The pcmfile is passed to fog_label with the following parameters
-% from the params struct:
-%
-% .nfft:      The number of samples in the FFT/MTM window
-% .fftshift:  The amount to shift each window (controls time
-%             resolution of spectrogram)
-%
-% .mtm:       The time-bandwidth resolution of the MTM process.
-% .thresh:    The threshhold, in dB, used to convert the
-%             spectrogram into a binary matrix.
-%
-% .df:        The radius, in the frequency dimension, of the
-%             neighborhood function used for component labelling.
-%             Units of Hz.
-%
-% .dt:        Like dt, but in the time dimension (units of ms)
-%
-% TODO:  allow dynamic specification of the neighborhood function
-% (needs an update to fog_label)
+% Copyright C Daniel Meliza, Z Chi 2010.  Licensed for use under Creative
+% Commons Attribution-Noncommercial-Share Alike 3.0 United States
+% License (http://creativecommons.org/licenses/by-nc-sa/3.0/us/).
 
 error(nargchk(1,2,nargin));
-params = mergestruct(fog_params, varargin{:});
+params = mergestruct(zedit_params, varargin{:});
+L = [];
 
-% by setting the threshhold unreasonably high we get no features
-cstr = sprintf('%s -v -t %3.2f -s %d --nfft %d --fftshift %d --mtm %1.1f --df %d --dt %d %s', ...
-               params.fog_label, params.thresh, params.min_size, params.nfft, params.fftshift, ...
-               params.mtm, params.df, params.dt, ...
-               pcmfile);
+cstr = sprintf('LD_LIBRARY_PATH="" %s --nfft %d --fftshift %d --nw %1.1f --df %3.2f --dt %3.2f --thresh %3.2f --min-size %3.2f --spec, %s', ...
+               params.labeller, params.nfft, params.fftshift, ...
+               params.nw, params.df, params.dt, ...
+               params.thresh, params.min_size, signalfile);
 
 fprintf('Computing labels: %s\n', cstr);
 [status, result] = system(cstr);
-fprintf('Done!\n');
-
-% now load the binfiles
-[p f e] = fileparts(pcmfile);
-dbfile = sprintf('%s_mtm_%d_%d_%.1f.bin', f, params.nfft, params.fftshift, ...
-                 params.mtm);
-lblfile = sprintf('%s_labels.bin', f);
-
-PSD = bimatrix(dbfile, 'double');
-PSD(PSD < 0) = 0;
-L   = bimatrix(lblfile, 'int') + 1;
+if status==0
+  fprintf('Done!\n');
+  % now load the binfiles
+  [p f e] = fileparts(signalfile);
+  lblfile = sprintf('%s_labels.bin', f);
+  L   = bimatrix(lblfile, 'int') + 1;
+  specfile = sprintf('%s_spec.bin', f);
+  PSD   = bimatrix(specfile, 'double','F');
+  PSD   = log10(max(PSD,1.0)) * 10;
+else
+  fprintf('Error running label command: %s\n', result);
+end

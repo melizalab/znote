@@ -1,42 +1,38 @@
-function [PSD,T,F] = fedit_psd(pcmfile, varargin)
+function [PSD,T,F] = zpsd(signalfile, varargin)
 %
-% FEDIT_PSD Computes the spectrotemporal PSD of an input waveform
+% ZPSD Computes the spectrotemporal PSD of an input waveform
 % using multitaper methods.
 %
-% [PSD,T,F] = FEDIT_PSD(pcmfile, [parameters])
+% [PSD,T,F] = ZPSD(signalfile, [parameters])
 %
-% Returns the ST power spectrum in a matrix, with columns
-% for each time point. If no output argument is supplied,
-% plots the PSD in the current figure.
+% Returns the ST power spectrum in a matrix.
 %
-% CDM, 8/2006
+% Copyright C Daniel Meliza, Z Chi 2010.  Licensed for use under Creative
+% Commons Attribution-Noncommercial-Share Alike 3.0 United States
+% License (http://creativecommons.org/licenses/by-nc-sa/3.0/us/).
 
 error(nargchk(1,2,nargin));
-params = mergestruct(fog_params, varargin{:});
+params = mergestruct(zedit_params, varargin{:});
+PSD = [];
+[signal,Fs,bd] = wavread(signalfile);
 
-cstr = sprintf('%s -t 100 --nfft %d --fftshift %d --mtm %f %s',...
-               params.fog_psd, params.nfft, params.fftshift, params.mtm, ...
-               pcmfile);
-fprintf('Generating DB spectro: %s\n', cstr);
+cstr = sprintf('LD_LIBRARY_PATH="" %s --nfft %d --fftshift %d --nw %1.1f --df %3.2f --dt %3.2f --thresh %3.2f --min-size %3.2f --spec %s', ...
+               params.labeller, params.nfft, params.fftshift, ...
+               params.nw, params.df, params.dt, ...
+               params.thresh, params.min_size, signalfile);
+
+fprintf('Computing labels: %s\n', cstr);
 [status, result] = system(cstr);
-fprintf('Done!\n');
-
-% Load the spectrogram
-[p f e] = fileparts(pcmfile);
-dbfile = sprintf('%s_mtm_%d_%d_%.1f.bin', f, params.nfft, params.fftshift, ...
-                 params.mtm);
-PSD = bimatrix(dbfile, 'double');
-% the values < 0 really aren't worth much and they eff up the colormap
-PSD(PSD < 0) = 0;
-T = linspace(0,params.Fs/2,size(PSD,1));
-F = linspace(0,size(PSD,2)*params.fftshift*1000/params.Fs, ...
+if status==0
+  fprintf('Done!\n');
+  % now load the binfiles
+  [p f e] = fileparts(signalfile);
+  specfile = sprintf('%s_spec.bin', f);
+  PSD   = bimatrix(specfile, 'double','F');
+  PSD   = log10(max(PSD,1.0)) * 10;
+  T = linspace(0,Fs/2,size(PSD,1));
+  F = linspace(0,size(PSD,2)*params.fftshift*1000/Fs, ...
              size(PSD,2));
-
-% if the function is being called without return value, plot
-% the data
-if nargout == 0
-     imagesc(F,T,PSD*10);
-     xlabel('Time (ms)');ylabel('F (Hz)');
-     axis xy, axis tight, box on;
-     %colorbar
+else
+  fprintf('Error running label command: %s\n', result);
 end
