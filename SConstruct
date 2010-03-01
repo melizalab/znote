@@ -1,6 +1,7 @@
 import os
 
 threads = 2
+system = os.uname()[0]
 
 common_src = ['components.cc']
 include_path = ['/opt/local/include']
@@ -8,12 +9,17 @@ lib_path = ['/lib','/usr/lib','/usr/lib64','/usr/local/lib','/usr/local/lib64','
 
 env = Environment(LIBPATH = lib_path,
                   CCFLAGS = ['-O2','-Wall'],
-#                  LIBS=['m','blitz','sndfile','fftw3','lapack',])  # this line for mac os x
-                  LIBS=['m','blitz','sndfile','fftw3','atlas','cblas','f77blas','lapack']) # for linux
+                  LIBS=['m','blitz','sndfile','fftw3'])
 env.Append(CPPPATH = include_path)
 if threads > 1:
     env.Append(CCFLAGS = '-DTHREADS=%d' % threads,
                LIBS = ['fftw3_threads','pthread'])
+
+# system-specific settings
+if system=='Darwin':
+    env.Append(LIBS = ['lapack'])
+elif system=='Linux':
+    env.Append(LIBS = ['atlas','cblas','f77blas','lapack'])
 
 env.Program('znote_label',['znote_label.cc','mtm.cc','dpss.c'] + common_src)
 env.Program('znote_extract',['znote_extract.cc','spect.cc'] + common_src)
