@@ -113,7 +113,7 @@ main(int argc, char **argv) {
 		exit(-1);
 	}
 
-	timeseries<double> pcm(signal_file.c_str());
+	timeseries<double> pcm(signal_file);
 	cout << "* Samples: " << pcm.samples.size() << endl
 	     << "* Samplerate: " << pcm.samplerate << endl;
 	

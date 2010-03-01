@@ -32,13 +32,15 @@ double min_area = 4000.0;
 
 string file_name;
 
+bool write_spec = false;
+
 void
 usage()
 {
 	cout << program_name << " (version " << program_version << ")\n\n ";
 	cout << program_name << " [--nfft <i>] [--fftshift <i>]  [--ntapers <i>] [--nw <f>]\n"
 	     << "                 [--thresh <f>] [--df <f>] [--dt <f>]\n"
-	     << "                 [--min-size <f>] <input>\n" << endl;
+	     << "                 [--min-size <f>] [--spec] <input>\n" << endl;
 	     
   
 	cout << "<i> indicates an integer argument; <f> a float. See documentation for details\n"
@@ -69,6 +71,8 @@ parse_args(int argc, char **argv)
 			min_area = atof(argv[++i]);
 		else if (strncmp(argv[i], "--thresh", 8) == 0)
 			spec_threshold = atof(argv[++i]);
+		else if (strncmp(argv[i], "--spec", 6) == 0)
+			write_spec = true;
 		else
 			file_name = string(argv[i]);
 	}
@@ -101,7 +105,7 @@ main(int argc, char **argv) {
 		exit(-1);
 	}
 	if (fext!=".bin") {
-		timeseries<short> pcm(file_name.c_str());
+		timeseries<short> pcm(file_name);
 		cout <<  "* Samples: " << pcm.samples.size() << endl
 		     <<  "* Samplerate: " << pcm.samplerate << endl
 		     <<  "* Nfft: " << nfft << " samples" << endl
@@ -114,10 +118,11 @@ main(int argc, char **argv) {
 		freq_r = (int)(f_nbhd_r * nfft / pcm.samplerate);
 		time_r = (int)(t_nbhd_r * pcm.samplerate / fft_shift * .001);
 		min_size = (int)(min_area * nfft / fft_shift * .001);
-		
+		if (write_spec)
+			write_bin(froot + "_spec.bin",spec);
 	}
 	else {
-		read_bin(file_name.c_str(), spec);
+		read_bin(file_name, spec);
 		freq_r = (int)(f_nbhd_r);
 		time_r = (int)(t_nbhd_r);
 		min_size = (int)min_area;
@@ -162,7 +167,7 @@ main(int argc, char **argv) {
 	cout << "------------------------------------" << endl
 	     << "* Total features: " << blitz::max(labels) << endl;
 
- 	write_bin((froot + "_labels.bin").c_str(),labels);
+ 	write_bin(froot + "_labels.bin",labels);
 	
 }
 
