@@ -85,8 +85,8 @@ void arange(blitz::Array<T,1> &output, int start, int stop, int step=1)
  * @return split point
  */
 inline
-unsigned int splitext(const std::string &in, std::string &froot, std::string &ext) {
-	unsigned int fidx = in.rfind(".");
+size_t splitext(const std::string &in, std::string &froot, std::string &ext) {
+	size_t fidx = in.rfind(".");
 	if (fidx==std::string::npos)
 		return -1;
 	froot.assign(in.substr(0,fidx));
