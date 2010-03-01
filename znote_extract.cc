@@ -85,10 +85,10 @@ main(int argc, char **argv) {
 		usage();
 	parse_args(argc, argv);
 
-	dmatrix spec;
+	char buf[128];
 	imatrix labels;
 	string sfroot, sfext;
-	int nfft, fft_shift;
+	int nfft, fft_shift, pad_col;
 
 	cout << "* Program: " << program_name << endl
 	     << "* Version: " << program_version << endl
@@ -100,11 +100,11 @@ main(int argc, char **argv) {
 		exit(-1);
 	}
 
-	timeseries<short> pcm(signal_file.c_str());
+	timeseries<double> pcm(signal_file);
 	cout << "* Samples: " << pcm.samples.size() << endl
 	     << "* Samplerate: " << pcm.samplerate << endl;
 	
-	read_bin(label_file.c_str(), labels);
+	read_bin(label_file, labels);
 	nfft = (labels.rows() - labels.rows() % 2) * 2;
 	fft_shift = int(pcm.samples.size() / labels.cols());
 	clist_vector features(get_components(labels));
@@ -112,6 +112,7 @@ main(int argc, char **argv) {
 	     << "* Features: " << features.size() << endl
 	     << "* Nfft: " << nfft << endl
 	     << "* Shift: " << fft_shift << endl;
+	pad_col = (int)(120.0 / fft_shift);
 
 	if (features.size()==0) {
 		cout << "* Error: No valid features defined in " << label_file << endl;
@@ -130,7 +131,7 @@ main(int argc, char **argv) {
 
  	STFT stft(nfft, grid.size());
 	stft.specgram(pcm.samples, window, grid);
-	write_bin((sfroot + "_spec.bin").c_str(),stft.get_buffer());
+	cmatrix spec(stft.get_buffer().copy());
 
 	// Gaussian roll-off filter
 	int fn = 1 + 2 * freq2row(f_hbdw, nfft, pcm.samplerate);
@@ -139,13 +140,14 @@ main(int argc, char **argv) {
 	     << "* Time rolloff: " << t_hbdw << " ms (" << tn << " bins)" << endl;
 	dmatrix gfilt(fn, tn);
 	gauss2d(gfilt, double(fn)/4, double(tn)/4);
+	cout << gfilt << endl;
 	
 	dmatrix masked_tot(labels.shape());
 	mask_sum(features,gfilt,coord(fn/2,tn/2),masked_tot);
 	masked_tot = blitz::max(masked_tot,1.0);
 	
 	ivector feat_nums(1);
-	if (feat_num > 0)
+	if (feat_num > -1)
 		feat_nums(0) = feat_num;
 	else
 		arange(feat_nums,0,features.size());
@@ -153,41 +155,60 @@ main(int argc, char **argv) {
 	cout << "-----------------------------------------" << endl
 	     << "feat" << '\t' << "t.onset" << '\t' << "f.onset" << '\t' 
 	     << "t.size" << '\t' << "f.size" << '\t'
-	     << "maxDB" << '\t' << "area" << endl;
+	     << "maxDB" << '\t' << "area" << '\t' << "samples" << endl;
 
 	dmatrix mask(labels.shape());
+	dvector recon(pcm.samples.size());
 	for (int i = 0; i < feat_nums.size(); i++) {
 
-		char buf[128];
 		cout << feat_nums(i);
 		coord_list feature = features[feat_nums(i)];
 
 		RectDomain<2> fbounds = component_bounds(feature);
-		cout << '\t' << fbounds.lbound(0) //col2time(tmin,fft_shift,pcm.samplerate)
-		     << '\t' << fbounds.lbound(1) //row2freq(fmin,nfft,pcm.samplerate)
-		     << '\t' << fbounds.ubound(0) - fbounds.lbound(0) 
-		     << '\t' << fbounds.ubound(1) - fbounds.lbound(1);
+		cout << '\t' << fbounds.lbound(1) //col2time(tmin,fft_shift,pcm.samplerate)
+		     << '\t' << fbounds.lbound(0) //row2freq(fmin,nfft,pcm.samplerate)
+		     << '\t' << fbounds.ubound(1) - fbounds.lbound(1) 
+		     << '\t' << fbounds.ubound(0) - fbounds.lbound(0);
 		
  		mask = 0;
  		make_mask(feature,gfilt,coord(fn/2,tn/2),mask);
  		mask /= masked_tot;
-		
 
  		cmatrix masked;
- 		mask_spectrogram(stft.get_buffer(), mask, masked);
+ 		mask_spectrogram(spec, mask, masked);
 		cout << '\t' << log10(blitz::max(abs(masked))) * 10
 		     << '\t' << feature.size();
 
- 		cvector output;
- 		stft.ispecgram(masked, window, grid, output);
- 		sprintf(buf, "%s_feature_%03d.bin", sfroot.c_str(), feat_nums(i));
- 		write_bin(buf, stft.get_buffer());
+ 		dvector output;
+		int start_col, stop_col;
+		if (pad_features) {
+			start_col = 0;
+			stop_col = grid.size()-1;
+		}
+		else {
+			start_col = max(0,fbounds.lbound(1)-pad_col);
+			stop_col = min(grid.size()-1,fbounds.ubound(1)+pad_col);
+		}
+		stft.ispecgram(masked, window, grid, output, start_col, stop_col);
 
 		sprintf(buf, "%s_feature_%03d.wav", sfroot.c_str(), feat_nums(i));
-		write_bin(buf, blitz::real(output));
-// 		timeseries<double> out(blitz::real(output), pcm.samplerate);
-// 		out.write_pcm(buf, SF_FORMAT_WAV);
+ 		
+		cout << '\t' << timeseries<double>(output, pcm.samplerate).write_pcm(buf);
+ 		if (output_deletions) {
+ 			dvector deletion = pcm.samples.copy();
+			deletion(Range(grid(start_col),grid(stop_col))) -= output;
+ 			sprintf(buf, "%s_fdel_%03d.wav", sfroot.c_str(), feat_nums(i));
+			timeseries<double>(deletion, pcm.samplerate).write_pcm(buf);
+ 		}
+		if (output_recon)
+			recon(Range(grid(start_col),grid(stop_col))) += output;
+			
  		cout << endl;
+	}
+	if (output_recon) {
+		sprintf(buf, "%s_recon.wav", sfroot.c_str());
+		cout << "* Wrote reconstruction to: " << buf << endl;
+		timeseries<double>(recon, pcm.samplerate).write_pcm(buf);
 	}
 }
 

@@ -38,16 +38,13 @@ void hanning(Array<T,1> &w)
 template <typename T> inline
 void gauss(Array<T,1> &w, double sigma)
 {
-	double n = (double)w.size();
-	w = exp(-(sqr((tensor::i - n/2)/sigma))/2.0);
+	w = exp(-(sqr((tensor::i - w.size()/2)/sigma))/2.0);
 }
 
 template <typename T> inline
 void gauss2d(Array<T,2> &w, double sigma1, double sigma2)
 {
-	double nr = (double)w.rows();
-	double nc = (double)w.cols();
-	w = exp(-sqr((tensor::i - nr/2)/sigma1)/2.0 - sqr((tensor::j - nc/2)/sigma2)/2.0);
+	w = exp(-sqr((tensor::i - w.rows()/2)/sigma1)/2.0 - sqr((tensor::j - w.cols()/2)/sigma2)/2.0);
 }
 
 template <typename T, int N_rank>
@@ -144,30 +141,33 @@ public:
 		return buffer;
 	}
 
-	template <typename T_in, typename T_win, typename T_out>
+	template <typename T_in, typename T_win>
 	void ispecgram(const Array<T_in,2> &spec, const Array<T_win,1> &window,
-		       const Array<int,1> &grid, Array<T_out,1> &output) 
+		       const Array<int,1> &grid, dvector &output,int first_col=0, int last_col=-1) 
         {
 		std::copy(spec.begin(), spec.end(), buffer.begin());
 		execute_transform(false);
-		overlap_add(window, grid, output);
+		overlap_add(window, grid, output, first_col, last_col);
 	}
 
-	template <typename T_win, typename T_out>
-	void overlap_add(const Array<T_win,1> &window, const Array<int,1> &grid, Array<T_out,1> &output)
+	template <typename T_win>
+	void overlap_add(const Array<T_win,1> &window, const Array<int,1> &grid, dvector &output,
+			 int first_col=0, int last_col=-1)
 	{
-		int N = grid(grid.size()-1) + buffer.rows();
+		if (last_col < first_col) last_col = grid.size();
 		int Nw = window.size();
+		int N = grid(last_col-1) - grid(first_col) + Nw;
 		output.resize(N);
 		Array<T_win,1> diag(N);
 
 		diag = 0;
 		output = 0;
-		for (int col = 0; col < buffer.cols(); col++) {
-			output(Range(grid(col),grid(col)+Nw)) = window * buffer(Range::all(),col);
-			diag(Range(grid(col),grid(col)+Nw)) += blitz::sqr(window);
+		for (int col = first_col; col < last_col; col++) {
+			int t = grid(col) - grid(first_col);
+			output(Range(t,t+Nw)) += window * blitz::real(buffer(Range::all(),col));
+			diag(Range(t,t+Nw)) += blitz::sqr(window);
 		}
-		output /= diag;
+		output /= blitz::where(diag>0,diag,1.0);
 	}
 
 	const cmatrix& get_buffer() const { return buffer; }

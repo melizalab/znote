@@ -32,6 +32,7 @@ void
 STFT::execute_transform(bool forward)
 {
 	fftw_execute(forward ? fwd : rev);
+	if (!forward) buffer /= buffer.rows();
 }
 
 
