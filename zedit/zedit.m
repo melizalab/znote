@@ -31,7 +31,7 @@ figtag = [mfilename '_' pcmroot];
 fig = findobj('tag',figtag);
 if isempty(fig)
      fig = open([mfilename '.fig']);
-     set(fig,'tag',figtag,'name',signalfile);%,'renderer','opengl');
+     set(fig,'tag',figtag,'name',signalfile,'renderer','opengl');
      handles = guihandles(fig);
      h = findobj(fig,'style','pushbutton');
      set(h,'Callback',@cb_btn);
