@@ -18,9 +18,9 @@ if threads > 1:
 
 # system-specific settings
 if system=='Darwin':
-    env.Append(LIBS = ['lapack'])
-    env.Append(LIBPATH = ['/opt/local/lib'])
-    env.Append(CPPPATH = ['/opt/local/include'])
+    env.Append(LIBS = ['lapack'],
+               CPPPATH = ['/opt/local/include'],
+               LIBPATH = ['/opt/local/lib'])
 elif system=='Linux':
     env.Append(LIBS = ['atlas','cblas','f77blas','lapack'])
 elif system=='Windows':

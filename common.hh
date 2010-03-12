@@ -68,15 +68,6 @@ void arange(blitz::Array<T,1> &output, int start, int stop, int step=1)
 	output = start + i*step;
 }
 
-// template <class InputIterator>
-// std::vector<std::iterator_traits<InputIterator>::value_type> 
-// unique(InputIterator start, InputIterator stop, std::vector<std::iterator_traits<InputIterator>::value_type>)
-// {
-// 	std::iterator_traits<InputIterator>::value_type max_val = ;
-// 	std::vector<std::iterator_traits<InputIterator>::value_type> out;
-// 	for (++start;start!=stop;++start) {
-// 		if (*start > max_val)
-
 /** 
  * Split a file name into root and extension.
  * 

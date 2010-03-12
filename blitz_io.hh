@@ -25,7 +25,8 @@
  * @param out - output array (contents are overwritten)
  * 
  * @return - number of samples read
- */template<typename T>
+ */
+template<typename T>
 int read_bin(const char *filename, blitz::Array<T,2> &out) {
 	FILE *fp;
 	int count, expected;

@@ -98,7 +98,6 @@ mtpower(const mfft *mtm, double *pow, double sigpow)
 				Sk[t*real_count+n] += mtm->buf[t*nfft+n]*mtm->buf[t*nfft+n]*mtm->lambdas[t];
 			for (n = 1; n < imag_count; n++)
 				Sk[t*real_count+n] += mtm->buf[t*nfft+(nfft-n)]*mtm->buf[t*nfft+(nfft-n)]*mtm->lambdas[t];
-			//Sk[t*nfft+n] *= 2;
 		}
 		// initial guess is average of first two tapers
 		err = 0;
@@ -109,27 +108,20 @@ mtpower(const mfft *mtm, double *pow, double sigpow)
 
 		tol = 0.0005 * sigpow / nfft;
 		err /= nfft;
-		//printf("err: %3.4g; tol: %3.4g\n", err, tol);
-		//for(t = 0; t < ntapers; t++)
-		//      printf("%3.4g ", sigpow * (1 - mtm->lambdas[t]));
-		//printf("\n");
 		while (err > tol) {
 			err = 0;
 			for (n = 0; n < real_count; n++) {
 				est = pow[n];
 				num = den = 0;
-				//printf("%d: est=%3.4g; ", n, est);
 				for (t=0; t < ntapers; t++) {
 					w = est / (est * mtm->lambdas[t] + sigpow * (1 - mtm->lambdas[t]));
 					w = w * w * mtm->lambdas[t];
-					//printf("%3.4g ",Sk[t*real_count+n]);
 					num += w * Sk[t*real_count+n];
 					den += w;
 				}
 				pow[n] = num/den;
 				err += fabs(num/den-est);
 			}
-			//printf("err: %3.4g\n", err);
 		}
 		free(Sk);
 	}
