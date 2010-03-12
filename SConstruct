@@ -29,7 +29,6 @@ elif system=='Windows':
                CPPPATH = ['./blitz-0.9','./libsndfile/include','./fftw/include'],
                LIBPATH = ['./blitz-0.9/lib','./libsndfile/lib','./fftw/lib','./lapack/'],
                LIBS=['m','blitz','sndfile','fftw3','lapack','blas','g2c'])
-    print env
 
 env.Program('znote_label',['znote_label.cc','mtm.cc','dpss.c'] + common_src)
 env.Program('znote_extract',['znote_extract.cc','spect.cc'] + common_src)
