@@ -15,6 +15,7 @@
 #include <cmath>
 #include <complex>
 #include <vector>
+#include <cstring>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846264338327
@@ -61,9 +62,10 @@ bool inrange(const blitz::Array<T,N_rank> &A, const blitz::TinyVector<int,N_rank
 template <typename T> inline
 void arange(blitz::Array<T,1> &output, int start, int stop, int step=1) 
 {
+	blitz::firstIndex i;
 	int n = (stop - start) / step;
 	output.resize(n);
-	output = start + blitz::tensor::i*step;
+	output = start + i*step;
 }
 
 // template <class InputIterator>
@@ -88,7 +90,7 @@ inline
 size_t splitext(const std::string &in, std::string &froot, std::string &ext) {
 	size_t fidx = in.rfind(".");
 	if (fidx==std::string::npos)
-		return -1;
+		return std::string::npos;
 	froot.assign(in.substr(0,fidx));
 	ext.assign(in.substr(fidx));
 	return fidx;

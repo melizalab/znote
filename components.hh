@@ -12,6 +12,7 @@
  * License (http://creativecommons.org/licenses/by-nc-sa/3.0/us/).
  */
 #include "common.hh"
+#include <algorithm>
 
 const int UNMARKED = -1;	/**< value of unmarked points in the label array */
 

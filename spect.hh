@@ -13,6 +13,7 @@
  */
 #include "common.hh"
 #include <fftw3.h>
+#include <algorithm>
 #include "blitz_io.hh"
 
 using namespace blitz;
@@ -22,27 +23,32 @@ typedef std::complex<double> cmplx;
 template <typename T> inline
 void hamming(Array<T,1> &w)
 {
+	firstIndex i;
 	int n = w.size();
-	w = 0.54 - 0.46 * cos (2 * M_PI * tensor::i / (n-1));
+	w = 0.54 - 0.46 * cos (2 * M_PI * i / (n-1));
 }
 
 template <typename T> inline
 void hanning(Array<T,1> &w)
 {
+	firstIndex i;
 	int n = w.size();
-	w = 0.54 * (1 - cos (2 * M_PI * tensor::i / (n-1)));
+	w = 0.54 * (1 - cos (2 * M_PI * i / (n-1)));
 }
 
 template <typename T> inline
 void gauss(Array<T,1> &w, double sigma)
 {
-	w = exp(-(sqr((tensor::i - w.size()/2)/sigma))/2.0);
+	firstIndex i;
+	w = exp(-(sqr((i - w.size()/2)/sigma))/2.0);
 }
 
 template <typename T> inline
 void gauss2d(Array<T,2> &w, double sigma1, double sigma2)
 {
-	w = exp(-sqr((tensor::i - w.rows()/2)/sigma1)/2.0 - sqr((tensor::j - w.cols()/2)/sigma2)/2.0);
+	firstIndex i;
+	secondIndex j;
+	w = exp(-sqr((i - w.rows()/2)/sigma1)/2.0 - sqr((j - w.cols()/2)/sigma2)/2.0);
 }
 
 inline

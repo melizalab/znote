@@ -66,17 +66,23 @@ sequences used by znote_label.
 
 The build process is controlled by scons, an improved version of make.
 Some editing of this file may be necessary to get it to build on your
-system.
+system.  
 
 System-specific notes:
 
 *** Mac OS X
 
-OS X comes with LAPACK as part of the vecLib framework.  FFTW, blitz,
-and libsndfile can be installed through the macports system, as
-follows:
+Znote was developed on OS X 10.6 (Snow Leopard). OS X comes with
+LAPACK as part of the vecLib framework.  FFTW, blitz, and libsndfile
+can be installed through the macports system, as follows:
 
 $ sudo port install blitz fftw-3 libsndfile
+
+Scons is also available through macports, although this will cause a
+separate copy of python to be installed under the macports tree, if it
+is not already.
+
+$ sudo port install scons
 
 The SConstruct file, as supplied, should compile the programs on any
 system with XCode installed:
@@ -93,7 +99,20 @@ appropriate headers and libraries are located.
 
 *** Windows
 
-Not tested.
+Znote has been successfully compiled on windows XP using the MinGW
+compiler (i.e. gcc 3.4). Getting all the dependencies compiled is
+tricky.  Blitz (0.9) does not compile, or work with gcc 4.4.  I
+recommend installing the enthought Python distribution, which ships
+with MinGW, and installing Msys or Cygwin in order to run the
+configure scripts for the dependencies.  FFTW3, blitz and libsndfile
+should compile out of the box.  Use static libraries if possible to
+avoid having dependencies on DLLs. LAPACK needs to be compiled with
+g77, not gfortran.  The SConstruct file assumes that the dependencies
+have been installed under the znote source tree.
+
+Hopefully, you will not have to do any of this - znote_label.exe and
+znote_extract.exe were compiled on Windows XP.  Like the rest of
+znote, no support is offered.
 
 *** Performance notes
 

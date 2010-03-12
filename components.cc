@@ -15,9 +15,11 @@
 void
 ellipse_neighborhood(coord_list &indices, int n_row, int n_col)
 {
+	blitz::firstIndex i;
+	blitz::secondIndex j;
 	double x(n_row), y(n_col);
 	blitz::Array<bool,2> nmat(2 * n_row + 1, 2 * n_col + 1);
-	nmat = (blitz::sqr((blitz::tensor::i - x)/x) + blitz::sqr((blitz::tensor::j - y)/y)) <= 1.0;
+	nmat = (blitz::sqr((i - x)/x) + blitz::sqr((j - y)/y)) <= 1.0;
 
 	neighborhood(indices, nmat);
 }

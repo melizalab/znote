@@ -9,6 +9,7 @@
  * 
  */
 #include <cstdio>
+#include <cstring>
 #include <cmath>
 #include <float.h>
 #include <complex>
@@ -103,7 +104,7 @@ mtpower(const mfft *mtm, double *pow, double sigpow)
 		err = 0;
 		for (n = 0; n < real_count; n++) {
 			pow[n] = (Sk[n] + Sk[real_count+n])/2;
-			err += abs(pow[n]);
+			err += fabs(pow[n]);
 		}
 
 		tol = 0.0005 * sigpow / nfft;
