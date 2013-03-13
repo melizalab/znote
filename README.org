@@ -5,72 +5,67 @@
 #+EMAIL:     dan@meliza.org
 #+LANGUAGE:   en
 
-Znote consists of a suite of libraries and programs for
-spectrotemporal decomposition of acoustic signals.  Many bioacoustic
-signals, such as birdsong, consist of a set of spectrotemporally
-disjoint "objects".  These objects may overlap in time with each
-other, as when a bird is vocalizing with both sides of its syrinx
-simultaneously; or overlap with sounds from other animals or the
-environment, as in field recordings.  It is often possible to separate
-these objects from each other in the spectrotemporal domain, but it
-then becomes necessary to reconstruct the sound pressure waveforms
-giving rise to the isolated spectrotemporal components.
+Znote consists of a suite of libraries and programs for spectrotemporal
+decomposition of acoustic signals. Many bioacoustic signals, such as birdsong,
+consist of a set of spectrotemporally disjoint "objects". These objects may
+overlap in time with each other, as when a bird is vocalizing with both sides of
+its syrinx simultaneously; or overlap with sounds from other animals or the
+environment, as in field recordings. It is often possible to separate these
+objects from each other in the spectrotemporal domain, but it then becomes
+necessary to reconstruct the sound pressure waveforms giving rise to the
+isolated spectrotemporal components.
 
-The first stage is to identify the components of the vocalization.
-znote_label provides one method of doing this, by finding all the
-connected components in a signal.  Briefly, the spectrogram of the
-signal is computed, and all the points which are above this
-spectrogram are grouped into contiguous features.  The output is an
-array with the same dimensions of the spectrogram, in which each
-time-frequency point is given an integer code indicating which
-component it belongs to.
+The first stage is to identify the components of the vocalization. znote_label
+provides one method of doing this, by finding all the connected components in a
+signal. Briefly, the spectrogram of the signal is computed, and all the points
+which are above this spectrogram are grouped into contiguous features. The
+output is an array with the same dimensions of the spectrogram, in which each
+time-frequency point is given an integer code indicating which component it
+belongs to.
 
-The second stage is to invert the spectrographic transform for each of
-the identified components.  This is done by znote_extract, which takes
-as input the original signal and the array indicating which points in
-the spectrogram belong to which features.  It is not necessary to use
-znote_label to generate this array, and the feature-file can be
-manipulated after it is generated to group or split components.  A
-MATLAB GUI for simple feature manipulation is provided.
+The second stage is to invert the spectrographic transform for each of the
+identified components. This is done by znote_extract, which takes as input the
+original signal and the array indicating which points in the spectrogram belong
+to which features. It is not necessary to use znote_label to generate this
+array, and the feature-file can be manipulated after it is generated to group or
+split components. A MATLAB GUI for simple feature manipulation is provided.
 
 For more information on the algorithm, see:
 
-Meliza CD, Chi Z, Margoliash D, "Representations of Conspecific
-Song by Starling Secondary Forebrain Auditory Neurons: Towards a
-Hierarchical Framework". J Neurophysiology, doi:10.1152/jn.00464.2009
+Meliza CD, Chi Z, Margoliash D, "Representations of Conspecific Song by Starling
+Secondary Forebrain Auditory Neurons: Towards a Hierarchical Framework". J
+Neurophysiology, doi:10.1152/jn.00464.2009
 
-* License and warranty
+** License and warranty
 
-Use of the code is free for non-commercial purposes under the
-Creative Commons Attribution-Noncommercial-Share Alike 3.0 United
-States License (http://creativecommons.org/licenses/by-nc-sa/3.0/us/). 
+Use of the code is free for non-commercial purposes under the Creative Commons
+Attribution-Noncommercial-Share Alike 3.0 United States License
+(http://creativecommons.org/licenses/by-nc-sa/3.0/us/).
 
-C Daniel Meliza, Zhiyi Chi, and Daniel Margoliash (or the above paper)
-will be acknowledged as the source of the algorithms in any
-publications reporting its use or the use of any modified version of
-the program.
+C Daniel Meliza, Zhiyi Chi, and Daniel Margoliash (or the above paper) will be
+acknowledged as the source of the algorithms in any publications reporting its
+use or the use of any modified version of the program.
 
-THE PROGRAMS ARE PROVIDED "AS IS" WITHOUT WARRANTY OF MERCANTABILITY
-OR FITNESS FOR A PARTICULAR PURPOSE OR ANY OTHER WARRANTY, EXPRESS OR
-IMPLIED. IN NO EVENT SHALL THE UNIVERSITY OF CHICAGO, THE UNIVERSITY
-OF CONNECTICUT, OR DRS. MELIZA, CHI OR MARGOLIASH BE LIABLE FOR ANY
-DIRECT OR CONSEQUENTIAL DAMAGES RESULTING FROM USE OF THE PROGRAMS.
-THE USER BEARS THE ENTIRE RISK FOR USE OF THE PROGRAMS.
+THE PROGRAMS ARE PROVIDED "AS IS" WITHOUT WARRANTY OF MERCANTABILITY OR FITNESS
+FOR A PARTICULAR PURPOSE OR ANY OTHER WARRANTY, EXPRESS OR IMPLIED. IN NO EVENT
+SHALL THE UNIVERSITY OF CHICAGO, THE UNIVERSITY OF CONNECTICUT, OR DRS. MELIZA,
+CHI OR MARGOLIASH BE LIABLE FOR ANY DIRECT OR CONSEQUENTIAL DAMAGES RESULTING
+FROM USE OF THE PROGRAMS. THE USER BEARS THE ENTIRE RISK FOR USE OF THE
+PROGRAMS.
 
 To contact the authors, please consult the official repository for
 znote at http://www.github.org/dmeliza/znote
 
-* Compilation and Installation
+** Compilation and Installation
 
-znote depends on the Blitz C++ array library for data manipulation,
-the FFTW library for computing FFT transforms, and the libsndfile
-library for reading acoustic signal data.  It also requires the LAPACK
-fucntions dsterf and dgtsv to generate the discrete prolate spherical
-sequences used by znote_label.
+*** Dependencies
 
-The build process is controlled by scons, an improved version of make.
-Some editing of this file may be necessary to get it to build on your
-system.  
+- a modern C++ compiler
+- scons >= 1.3
+- libsndfile >= 1.0.17 (http://www.mega-nerd.com/libsndfile)
+- blitz >= 0.9 (http://blitz.sourceforge.net/)
+- fftw >= 3.3 (http://www.fftw.org)
+- LAPACK (specifically functions dsterf and dgtsv)
 
 *** Mac OS X
 
@@ -124,13 +119,13 @@ overhead of setting up multiple threads is rarely worth it. To enable
 multiple threads in znote, edit SConstruct and set threads to some
 number less than or equal to the number of cores in your system.
 
-* Usage
+** Usage
 
-** znote_label
+*** znote_label
 
-znote_label [--nfft <i>] [--fftshift <i>]  [--ntapers <i>] [--nw <f>]
-                 [--thresh <f>] [--df <f>] [--dt <f>]
-                 [--min-size <f>] <input>
+: znote_label [--nfft <i>] [--fftshift <i>]  [--ntapers <i>] [--nw <f>]
+:                 [--thresh <f>] [--df <f>] [--dt <f>]
+:                 [--min-size <f>] <input>
 
 nfft: controls the size of the FFT analysis window.  Default 512,
 which is appropriate most signals sampled at around 44 kHz. Larger
@@ -190,11 +185,11 @@ spectrogram, so this is not recommended for novice users.
 The program outputs a .bin file indicating which points in the
 spectrogram belong to which features.
 
-** znote_extract
+*** znote_extract
 
-znote_extract [--fbdw <f>] [--tbdw <f>]
-                 [--feat <i>] [--pad] [--del] [--recon]
-                 <signal> <labels>
+: znote_extract [--fbdw <f>] [--tbdw <f>]
+:                [--feat <i>] [--pad] [--del] [--recon]
+:                <signal> <labels>
 
 znote_extract uses the labels defined in <labels> to generate masks,
 which it uses to extract the associated time series in <signal>.  The
@@ -239,14 +234,14 @@ For component deletions, the output files are named as signal_fdel_000.wav, etc
 
 The reconstruction has the name signal_recon.wav
 
-** ZEdit
+*** ZEdit
 
 Zedit is a simple MATLAB interface for editing .bin files.  It allows
 merging and splitting of components while visualizing the spectrogram
 of the corresponding signal.  To edit components for a signal, run
 zedit in MATLAB as follows:
 
->> zedit <wavefile>
+: >> zedit <wavefile>
 
 zedit runs znote_label to generate spectrograms and calculate
 connected components. If the executable is not in your path, you may
@@ -256,7 +251,7 @@ contour indicating where the threshold lies.
 
 The parameters of the spectrographic transform can be changed in the
 FFT/MTM panel. The threshold value can be edited manually or by
-clicking on the colorbar to the right of the spectrogram.  
+clicking on the colorbar to the right of the spectrogram.
 
 In the LabelSet panel, to calculate components, click the Label
 button.  Note: this will overwrite the file <wavefile>_labels.bin. To
@@ -274,3 +269,12 @@ Save the edited labelset by clicking Save in the LabelSet panel.
 Choose a name for the output file; this can be used with znote_extract
 to generate the signals associated with the components.
 
+** Version History
+
+*** 1.1.0
+
+First public release.
+
+*** 1.2.0
+
+Updated to compile with blitz 0.10.  Should still compile with 0.9

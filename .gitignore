@@ -1,0 +1,7 @@
+/.sconsign.dblite
+.DS_Store
+*.bin
+*.wav
+*.[oa]
+/znote_extract
+/znote_label

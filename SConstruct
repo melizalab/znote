@@ -1,16 +1,16 @@
 import os
 
-threads = 1
 if hasattr(os,'uname'):
     system = os.uname()[0]
 else:
     system = 'Windows'
 
-common_src = ['components.cc']
-lib_path = ['/lib','/usr/lib','/usr/lib64','/usr/local/lib','/usr/local/lib64']
+debug = ARGUMENTS.get('debug',1)
+threads = int(ARGUMENTS.get('thread',1))
 
-env = Environment(LIBPATH = lib_path,
-                  CCFLAGS = ['-O2','-Wall'],
+common_src = ['components.cc']
+
+env = Environment(CCFLAGS = ['-Wall'],
                   LIBS=['m','blitz','sndfile','fftw3'])
 if threads > 1:
     env.Append(CCFLAGS = '-DTHREADS=%d' % threads,
@@ -29,6 +29,12 @@ elif system=='Windows':
                CPPPATH = ['./blitz-0.9','./libsndfile/include','./fftw/include'],
                LIBPATH = ['./blitz-0.9/lib','./libsndfile/lib','./fftw/lib','./lapack/'],
                LIBS=['m','blitz','sndfile','fftw3','lapack','blas','g2c'])
+
+if int(debug):
+    env.Append(CCFLAGS=['-g2', '-DDEBUG=1'])
+else:
+    env.Append(CCFLAGS=['-O2'])
+
 
 env.Program('znote_label',['znote_label.cc','mtm.cc','dpss.c'] + common_src)
 env.Program('znote_extract',['znote_extract.cc','spect.cc'] + common_src)

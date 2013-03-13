@@ -2,11 +2,11 @@
  * @file   znote_label.cc
  * @author Daniel Meliza <dmeliza@uchicago.edu>
  * @date   Mon Mar  1 13:38:31 2010
- * 
+ *
  * Copyright C Daniel Meliza, Z Chi 2010.  Licensed for use under Creative
  * Commons Attribution-Noncommercial-Share Alike 3.0 United States
  * License (http://creativecommons.org/licenses/by-nc-sa/3.0/us/).
- * 
+ *
  */
 #include "common.hh"
 #include "blitz_io.hh"
@@ -18,7 +18,7 @@
 using namespace std;
 
 static const string program_name = "znote_label";
-static const string program_version = "1.1.0";
+static const string program_version = "1.2.0";
 
 double spec_threshold = 0.5;
 int nfft = 512;
@@ -41,8 +41,8 @@ usage()
 	cout << program_name << " [--nfft <i>] [--fftshift <i>]  [--ntapers <i>] [--nw <f>]\n"
 	     << "                 [--thresh <f>] [--df <f>] [--dt <f>]\n"
 	     << "                 [--min-size <f>] [--spec] <input>\n" << endl;
-	     
-  
+
+
 	cout << "<i> indicates an integer argument; <f> a float. See documentation for details\n"
 	     << "<input> can be either a sound file or a spectrogram.\n"
 	     << "Output is to <pcmfile>_labels.bin" << endl;
@@ -76,7 +76,7 @@ parse_args(int argc, char **argv)
 		else
 			file_name = string(argv[i]);
 	}
-	       
+
 	if (file_name.size() < 1) {
 		cerr << "Error: must supply a file for input..." << endl;
 		exit(-1);
@@ -99,7 +99,7 @@ main(int argc, char **argv) {
 	cout << "* Program: " << program_name << endl
 	     << "* Version: " << program_version << endl
 	     << "* Input: " << file_name << endl;
-	
+
 	if (splitext(file_name, froot, fext) < 0) {
 		cout << "* ERROR: Unable to determine input file type" << endl;
 		exit(-1);
@@ -113,7 +113,7 @@ main(int argc, char **argv) {
 		     <<  "* Tapers: " << ntapers << endl
 		     <<  "* Time-freq product: " << nw << endl
 		     <<  "* Minimum feature area: " << min_area * 0.001 << " kHz-ms " << endl;
-	
+
 		spec.reference(mtmspec(pcm.samples, nfft, nw, ntapers, fft_shift));
 		freq_r = (int)(f_nbhd_r * nfft / pcm.samplerate);
 		time_r = (int)(t_nbhd_r * pcm.samplerate / fft_shift * .001);
@@ -126,7 +126,7 @@ main(int argc, char **argv) {
 		freq_r = (int)(f_nbhd_r);
 		time_r = (int)(t_nbhd_r);
 		min_size = (int)min_area;
-	}
+	}\
 	cout << "* Spectrogram dimensions: [" << spec.rows() << " " << spec.cols() << "]" << endl;
 
 	imatrix tspec(spec.shape());
@@ -148,7 +148,7 @@ main(int argc, char **argv) {
 
  	clist_vector clist(matrix_cbranches(tspec, nbhd, labels));
 	cout << "* Extracted features: " << clist.size() << endl
-	     << "* Minimum size: " << min_size << endl 
+	     << "* Minimum size: " << min_size << endl
 	     << "------------------------------------" << endl
 	     << "feat\tpixels\trow\tcol" << endl;
 	clist_vector::const_iterator it = clist.begin();
@@ -168,6 +168,6 @@ main(int argc, char **argv) {
 	     << "* Total features: " << blitz::max(labels) << endl;
 
  	write_bin(froot + "_labels.bin",labels);
-	
+
 }
 

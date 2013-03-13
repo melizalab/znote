@@ -4,9 +4,9 @@
  * @file   common.hh
  * @author Daniel Meliza <dmeliza@uchicago.edu>
  * @date   Mon Mar  1 13:33:47 2010
- * 
+ *
  * @brief  Define common types and functions for znote
- * 
+ *
  * Copyright C Daniel Meliza, Z Chi 2010.  Licensed for use under Creative
  * Commons Attribution-Noncommercial-Share Alike 3.0 United States
  * License (http://creativecommons.org/licenses/by-nc-sa/3.0/us/).
@@ -19,6 +19,14 @@
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846264338327
+#endif
+
+// try to determine whether this is blitz 0.9. probably very fragile
+#define BZ_MAJOR_VERSION 0
+#ifndef BZ_ET_FORWARD_H
+#define BZ_MINOR_VERSION 9
+#else
+#define BZ_MINOR_VERSION 10
 #endif
 
 
@@ -35,32 +43,32 @@ typedef std::vector<coord> coord_vector;
 typedef std::vector<coord_list> clist_vector;
 typedef std::vector<coord_vector> cvec_vector;
 
-/** 
+/**
  * Determine if coordinates are in range for an array.
- * 
+ *
  * @param A  Array to check
  * @param I  Indices to check
- * 
+ *
  * @return true if A.lbound(i) <= I(i) <= A.ubound(i) for i in [0,N_rank)
  */
 template <typename T, int N_rank> inline
-bool inrange(const blitz::Array<T,N_rank> &A, const blitz::TinyVector<int,N_rank> &I) 
+bool inrange(const blitz::Array<T,N_rank> &A, const blitz::TinyVector<int,N_rank> &I)
 {
 	for (int i = 0; i < N_rank; i++)
 		if ((I(i) < A.lbound(i)) || (I(i) > A.ubound(i))) return false;
 	return true;
 }
 
-/** 
+/**
  * Construct an evenly spaced vector across a range.
- * 
+ *
  * @param output Output vector. Resized and overwritten.
  * @param start Start point
  * @param stop Stop point (exclusive)
  * @param step Step size
  */
 template <typename T> inline
-void arange(blitz::Array<T,1> &output, int start, int stop, int step=1) 
+void arange(blitz::Array<T,1> &output, int start, int stop, int step=1)
 {
 	blitz::firstIndex i;
 	int n = (stop - start) / step;
@@ -68,13 +76,13 @@ void arange(blitz::Array<T,1> &output, int start, int stop, int step=1)
 	output = start + i*step;
 }
 
-/** 
+/**
  * Split a file name into root and extension.
- * 
+ *
  * @param in input string
  * @param froot file name root
  * @param ext file name extension
- * 
+ *
  * @return split point
  */
 inline
@@ -86,6 +94,6 @@ size_t splitext(const std::string &in, std::string &froot, std::string &ext) {
 	ext.assign(in.substr(fidx));
 	return fidx;
 }
-	
+
 
 #endif

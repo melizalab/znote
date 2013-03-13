@@ -2,11 +2,11 @@
  * @file   znote_extract.cc
  * @author Daniel Meliza <dmeliza@uchicago.edu>
  * @date   Mon Mar  1 13:38:31 2010
- * 
+ *
  * Copyright C Daniel Meliza, Z Chi 2010.  Licensed for use under Creative
  * Commons Attribution-Noncommercial-Share Alike 3.0 United States
  * License (http://creativecommons.org/licenses/by-nc-sa/3.0/us/).
- * 
+ *
  */
 #include "common.hh"
 #include "blitz_io.hh"
@@ -22,7 +22,7 @@
 using namespace std;
 
 static const string program_name = "znote_extract";
-static const string program_version = "1.1.0";
+static const string program_version = "1.2.0";
 
 // The half bandwidth of the smoothing kernel in the frequency domain, in HZ
 double f_hbdw = 200.0;
@@ -47,8 +47,8 @@ usage()
 	cout << program_name << " [--fbdw <f>] [--tbdw <f>]\n"
 	     << "                 [--feat <i>] [--pad] [--del] [--recon]\n"
 	     << "                 <signal> <labels>\n" << endl;
-	     
-  
+
+
 	cout << "<i> indicates an integer argument; <f> a float. See documentation for details\n"
 	     << "<signal> must be either a sound file.\n"
 	     << "The dimensions of <labels> control spectrographic calculations" << endl;
@@ -79,7 +79,7 @@ parse_args(int argc, char **argv)
 		else if (label_file.size()==0)
 			label_file.append(argv[i]);
 	}
-	       
+
 	if (signal_file.size() < 1) {
 		cerr << "Error: must supply a signal file for input..." << endl;
 		exit(-1);
@@ -93,6 +93,11 @@ parse_args(int argc, char **argv)
 
 int
 main(int argc, char **argv) {
+
+#if BZ_MAJOR_VERSION > 0 || BZ_MINOR_VERSION > 9
+        using blitz::extrema::max;
+        using blitz::extrema::min;
+#endif
 
 	if (argc == 1)
 		usage();
@@ -116,7 +121,7 @@ main(int argc, char **argv) {
 	timeseries<double> pcm(signal_file);
 	cout << "* Samples: " << pcm.samples.size() << endl
 	     << "* Samplerate: " << pcm.samplerate << endl;
-	
+
 	read_bin(label_file, labels);
 	nfft = (labels.rows() - labels.rows() % 2) * 2;
 	fft_shift = int(pcm.samples.size() / labels.cols());
@@ -153,27 +158,29 @@ main(int argc, char **argv) {
 	     << "* Time rolloff: " << t_hbdw << " ms (" << tn << " bins)" << endl;
 	dmatrix gfilt(fn, tn);
 	gauss2d(gfilt, double(fn)/4, double(tn)/4);
-	
+
 	dmatrix masked_tot(labels.shape());
 	mask_sum(features,gfilt,coord(fn/2,tn/2),masked_tot);
 	masked_tot = blitz::max(masked_tot,1.0);
 
 	cout << "* Max feature overlap: " << blitz::max(masked_tot) << endl;
-	
+
 	ivector feat_nums(1);
 	if (feat_num > -1)
 		feat_nums(0) = feat_num;
 	else
 		arange(feat_nums,0,features.size());
 
+
 	cout << "-----------------------------------------" << endl
-	     << "feat" << '\t' << "t.onset" << '\t' << "f.onset" << '\t' 
-	     << "t.size" << '\t' << "maxDB" << '\t'
-	     << "f.size" << '\t' << "area" << '\t' << "samples" << endl;
+	     << "feat" << '\t' << "t.onset" << '\t' << "f.onset" << '\t'
+	     << "t.size" << '\t' << "f.size" << '\t'
+	     << "area" << '\t' << "maxDB" << '\t' << "samples" << endl;
 
 	dmatrix mask(labels.shape());
 	dvector recon(pcm.samples.size());
-	for (int i = 0; i < feat_nums.size(); i++) {
+        recon = 0;
+	for (size_t i = 0; i < feat_nums.size(); i++) {
 
 		cout << feat_nums(i);
 		coord_list feature = features[feat_nums(i)];
@@ -181,7 +188,7 @@ main(int argc, char **argv) {
 		RectDomain<2> fbounds = component_bounds(feature);
 		cout << '\t' << fbounds.lbound(1) //col2time(tmin,fft_shift,pcm.samplerate)
 		     << '\t' << fbounds.lbound(0) //row2freq(fmin,nfft,pcm.samplerate)
-		     << '\t' << fbounds.ubound(1) - fbounds.lbound(1) 
+		     << '\t' << fbounds.ubound(1) - fbounds.lbound(1)
 		     << '\t' << fbounds.ubound(0) - fbounds.lbound(0);
 		cout.flush();
 
@@ -204,11 +211,11 @@ main(int argc, char **argv) {
 		double maxpow = stft.ispecgram(spec, mask);
  		cout << '\t' << log10(maxpow) * 10;
  		cout.flush();
-		
+
 		stft.overlap_add(window, grid, output, start_col, stop_col);
 
 		sprintf(buf, "%s_feature_%03d.wav", sfroot.c_str(), feat_nums(i));
- 		
+
 		cout << '\t' << timeseries<double>(output, pcm.samplerate).write_pcm(buf);
  		if (output_deletions) {
  			dvector deletion = pcm.samples.copy();
@@ -216,9 +223,10 @@ main(int argc, char **argv) {
  			sprintf(buf, "%s_fdel_%03d.wav", sfroot.c_str(), feat_nums(i));
 			timeseries<double>(deletion, pcm.samplerate).write_pcm(buf);
  		}
-		if (output_recon)
+		if (output_recon) {
 			recon(Range(grid(start_col),grid(stop_col))) += output;
-			
+                }
+
  		cout << endl;
 	}
 	if (output_recon) {
