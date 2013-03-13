@@ -5,7 +5,7 @@ if hasattr(os,'uname'):
 else:
     system = 'Windows'
 
-debug = ARGUMENTS.get('debug',1)
+debug = ARGUMENTS.get('debug',0)
 threads = int(ARGUMENTS.get('thread',1))
 
 common_src = ['components.cc']
