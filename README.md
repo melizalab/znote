@@ -1,5 +1,7 @@
 # znote
 
+[![DOI](https://zenodo.org/badge/1015718.svg)](https://zenodo.org/badge/latestdoi/1015718)
+
 **znote** consists of a suite of libraries and programs for
 spectrotemporal decomposition of acoustic signals. Many bioacoustic
 signals, such as birdsong, consist of a set of spectrotemporally
