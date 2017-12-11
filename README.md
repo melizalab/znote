@@ -12,7 +12,7 @@ becomes necessary to reconstruct the sound pressure waveforms giving
 rise to the isolated spectrotemporal components.
 
 The first stage is to identify the components of the vocalization.
-**znote~label~** provides one method of doing this, by finding all the
+**znote_label** provides one method of doing this, by finding all the
 connected components in a signal. Briefly, the spectrogram of the signal
 is computed, and all the points which are above this spectrogram are
 grouped into contiguous features. The output is an array with the same
@@ -20,10 +20,10 @@ dimensions of the spectrogram, in which each time-frequency point is
 given an integer code indicating which component it belongs to.
 
 The second stage is to invert the spectrographic transform for each of
-the identified components. This is done by **znote~extract~**, which
+the identified components. This is done by **znote_extract**, which
 takes as input the original signal and the array indicating which points
 in the spectrogram belong to which features. It is not necessary to use
-**znote~label~** to generate this array, and the feature-file can be
+**znote_label** to generate this array, and the feature-file can be
 manipulated after it is generated to group or split components.
 **zedit**, a MATLAB GUI for simple feature manipulation is provided.
 
@@ -59,16 +59,16 @@ Compilation and Installation
 
 ### Dependencies
 
-**znote~label~** and **znote~extract~** require
+**znote_label** and **znote_extract** require
 
 -   a modern C++ compiler
--   scons &gt;= 1.3
--   libsndfile &gt;= 1.0.17 (<http://www.mega-nerd.com/libsndfile>)
--   blitz &gt;= 0.9 (<http://blitz.sourceforge.net/>)
--   fftw &gt;= 3.3 (<http://www.fftw.org>)
+-   scons >= 1.3
+-   libsndfile >= 1.0.17 (<http://www.mega-nerd.com/libsndfile>)
+-   blitz >= 0.9 (<http://blitz.sourceforge.net/>)
+-   fftw >= 3.3 (<http://www.fftw.org>)
 -   LAPACK (specifically functions dsterf and dgtsv)
 
-\*zedit\* requires a reasonably recent version of MATLAB
+**zedit** requires a reasonably recent version of MATLAB
 
 ### Mac OS X
 
@@ -97,10 +97,10 @@ scons -Q -j2
 
 ### Linux
 
-Znote has been compiled and tested on an x86~64~ Opteron system running
+Znote has been compiled and tested on an x86_64 Opteron system running
 Redhat EL5, with the ATLAS BLAS libraries and NETLIB LAPACK libraries
-installed under `/usr/local`. If necessary, edit the lib~path~ and
-include~path~ in SConstruct to point to directories where the
+installed under `/usr/local`. If necessary, edit the `lib_path` and
+`include_path` in SConstruct to point to directories where the
 appropriate headers and libraries are located.
 
 ### Windows
@@ -116,8 +116,8 @@ DLLs. LAPACK needs to be compiled with g77, not gfortran. The SConstruct
 file assumes that the dependencies have been installed under the znote
 source tree.
 
-Hopefully, you will not have to do any of this - znote~label~.exe and
-znote~extract~.exe were compiled on Windows XP. Like the rest of znote,
+Hopefully, you will not have to do any of this - `znote_label.exe` and
+`znote_extract.exe` were compiled on Windows XP. Like the rest of znote,
 no support is offered.
 
 ### Performance notes
@@ -184,7 +184,7 @@ calculated as an absolute value, and only the points in the spectrogram
 where the power is greater than this value are considered to be "above
 water" for the detection of components. If less than 1.0, the absolute
 threshold is calculated as the power corresponding to the quantile
-&lt;thresh&gt;. Default is 0.5 (or 50%). Note that the relative
+<thresh>. Default is 0.5 (or 50%). Note that the relative
 threshold is calculated on a linear scale, so 50% of the power is often
 confined to a fairly small portion of the signal.
 
@@ -196,12 +196,12 @@ fewer, larger components.
 `dt`: control temporal resolution of component search algorithm.
 Defaults to 2 ms.
 
-`min-size`: Components with less than &lt;min-size&gt; kHz-ms area are
+`min-size`: Components with less than <min-size> kHz-ms area are
 dropped.
 
-The input file to **znote~label~** can be a sound file (in any format
+The input file to **znote_label** can be a sound file (in any format
 libsndfile understands), or a .bin file containing the spectrogram of
-the signal. Consult blitz~io~.hh for documentation on the .bin format.
+the signal. Consult `blitz_io.hh` for documentation on the .bin format.
 The behaviors of many of the flags change when using a pre-calculated
 spectrogram, so this is not recommended for novice users.
 
@@ -216,7 +216,7 @@ znote_extract [--fbdw <f>] [--tbdw <f>]
                SIGNAL LABELFILE
 ```
 
-**znote~extract~** uses the labels defined in `LABELFILE` to generate
+**znote_extract** uses the labels defined in `LABELFILE` to generate
 masks, which it uses to extract the associated time series in `SIGNAL`.
 The masks are generated with a Gaussian roll-off filter, the parameters
 of which are controlled on the command line:
@@ -229,7 +229,7 @@ noise.
 `tbdw`: Set time bandwidth for smoothing kernel. Defaults to 2 ms.
 
 `feat`: By default, the program extracts all the component defined in
-&lt;labels&gt;; set this value to a nonnegative integer to restrict to a
+<labels>; set this value to a nonnegative integer to restrict to a
 single component.
 
 `pad`: By default, the program generates unpadded output files; if this
@@ -247,19 +247,19 @@ their original offset and output the resulting sum.
 phase information to reconstruct the signals.
 
 `LABELFILE` can be any integer bin file, including the file output by
-**znote~label~**. The dimensions of the file will be used to control the
+**znote_label**. The dimensions of the file will be used to control the
 FFT parameters of the extraction algorithm.
 
 Output:
 
-**znote~extract~** writes one wave file for each extracted component. If
+**znote_extract** writes one wave file for each extracted component. If
 the input file is named signal.wav, the output files will be named
-signal~feature000~.wav, signal~feature001~.wav, etc.
+`signal_feature000.wav`, `signal_feature001.wav`, etc.
 
 For component deletions, the output files are named as
-signal~fdel000~.wav, etc
+`signal_fdel000.wav`, etc
 
-The reconstruction has the name signal~recon~.wav
+The reconstruction has the name `signal_recon.wav`
 
 ### zedit
 
@@ -272,10 +272,10 @@ MATLAB as follows:
 >> zedit <wavefile>
 ```
 
-zedit runs **znote~label~** to generate spectrograms and calculate
+zedit runs **znote_label** to generate spectrograms and calculate
 connected components. If the executable is not in your path, you may
-need to edit zedit~params~.m When the program first runs, it will
-calculate the spectrogram of &lt;wavefile&gt; and display it with a
+need to edit zedit_params.m When the program first runs, it will
+calculate the spectrogram of `<wavefile>` and display it with a
 single contour indicating where the threshold lies.
 
 The parameters of the spectrographic transform can be changed in the
@@ -283,7 +283,7 @@ FFT/MTM panel. The threshold value can be edited manually or by clicking
 on the colorbar to the right of the spectrogram.
 
 In the LabelSet panel, to calculate components, click the Label button.
-Note: this will overwrite the file &lt;wavefile&gt;~labels~.bin. To load
+Note: this will overwrite the file `<wavefile>_labels.bin`. To load
 a previously generated label file, click Load.
 
 When a labelset is selected, a list of features is displayed in the
@@ -295,19 +295,19 @@ of interest. Click the middle mouse button to close the polygon and
 split the feature. Only currently selected features are affected.
 
 Save the edited labelset by clicking Save in the LabelSet panel. Choose
-a name for the output file; this can be used with **znote~extract~** to
+a name for the output file; this can be used with **znote_extract** to
 generate the signals associated with the components.
 
 ### Best practices
 
-The algorithm in **znote~extract~** can generate artifacts near edges of
+The algorithm in **znote_extract** can generate artifacts near edges of
 signals. If this is a problem, be sure to pad your signals with silence
 on either end.
 
 Another source of error is when components overlap. Overlap is caused by
 the rolloff filter, so if your components are too close together, try
 decreasing these values. You can tell if overlap is occurring when
-**znote~extract~** outputs a line like "Max feature overlap: 1.90596".
+**znote_extract** outputs a line like "Max feature overlap: 1.90596".
 If this value is 1.0 there is no overlap.
 
 Version History
